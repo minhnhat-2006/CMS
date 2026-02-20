@@ -1,0 +1,162 @@
+﻿:root {
+    /* Màu chủ đạo (Xanh đậm kiểu Đại học) */
+    --muce-primary: #003b7e;
+    --muce-hover: #0056b3;
+    --muce-accent: #f8f9fa;
+}
+
+/* =========================================
+   1. TOP HEADER BAR (Phần trên cùng màu xanh)
+   ========================================= */
+.top-header-bar {
+    background: linear-gradient(90deg, var(--muce-primary) 0%, #002a5c 100%); /* Hiệu ứng gradient sang trọng */
+    color: #ffffff;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Tinh chỉnh Logo & Tên trường */
+.school-name-hust h1 {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.1rem; /* Kích thước vừa phải */
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.school-name-hust p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 300;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* Nút chức năng (Cổng thông tin) */
+.functional-links .btn {
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-width: 1px;
+}
+
+    .functional-links .btn:hover {
+        background-color: #fff;
+        color: var(--muce-primary);
+    }
+
+/* =========================================
+   2. MAIN NAVIGATION (Thanh menu chính)
+   ========================================= */
+.main-nav-hust {
+    background-color: #fff;
+    border-bottom: 3px solid var(--muce-primary); /* Đường viền nhấn bên dưới */
+    padding: 0 !important; /* Xóa padding mặc định để căn chỉnh chiều cao */
+}
+
+    /* Link Menu cấp 1 */
+    .main-nav-hust .nav-link {
+        color: #333;
+        font-weight: 700;
+        font-size: 0.9rem;
+        padding: 1.2rem 1rem !important; /* Tăng chiều cao vùng click */
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+        /* Hiệu ứng Hover cho Menu cấp 1 */
+        .main-nav-hust .nav-link:hover,
+        .main-nav-hust .nav-link:focus,
+        .main-nav-hust .nav-item.show .nav-link {
+            color: var(--muce-primary);
+            background-color: rgba(0, 59, 126, 0.05);
+        }
+
+        /* Gạch chân chạy ra khi hover (Optional - tạo cảm giác hiện đại) */
+        .main-nav-hust .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 3px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--muce-primary);
+            transition: width 0.3s;
+        }
+
+        .main-nav-hust .nav-link:hover::after {
+            width: 100%;
+        }
+
+/* =========================================
+   3. DROPDOWN MENU (Menu con)
+   ========================================= */
+.dropdown-menu {
+    margin-top: 0; /* Dính liền với menu cha */
+    border-radius: 0 0 5px 5px; /* Bo góc dưới */
+    border-top: 2px solid var(--muce-primary); /* Viền trên màu xanh */
+    padding: 0;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #555;
+    padding: 10px 20px;
+    border-bottom: 1px solid #eee;
+    transition: all 0.2s;
+}
+
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+        background-color: var(--muce-primary);
+        color: #fff;
+        padding-left: 25px; /* Hiệu ứng đẩy chữ sang phải */
+    }
+
+/* =========================================
+   4. RESPONSIVE & UTILS
+   ========================================= */
+/* Hiệu ứng Dropdown khi Hover trên máy tính (Desktop only) */
+@media (min-width: 992px) {
+    .nav-item.dropdown:hover .dropdown-menu {
+        display: block;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Xử lý cho Mobile */
+@media (max-width: 991px) {
+    .top-header-bar img {
+        height: 40px !important; /* Thu nhỏ logo trên mobile */
+    }
+
+    .school-name-hust h1 {
+        font-size: 0.9rem;
+    }
+
+    .school-name-hust p {
+        font-size: 0.6rem;
+    }
+
+    .main-nav-hust .nav-link::after {
+        display: none; /* Tắt gạch chân trên mobile */
+    }
+}

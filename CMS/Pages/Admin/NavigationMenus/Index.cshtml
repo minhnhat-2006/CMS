@@ -1,0 +1,205 @@
+﻿@page
+@model CMS.Pages.NavigationMenus.IndexModel
+@{
+    ViewData["Title"] = "Quản lý Menu";
+}
+
+<div class="container py-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold text-dark mb-1"><i class="bi bi-diagram-3"></i> Cấu trúc Website</h4>
+            <p class="text-muted small mb-0">Quản lý hệ thống menu điều hướng đa cấp.</p>
+        </div>
+        <a asp-page="Create" class="btn btn-primary shadow-sm px-4 rounded-pill fw-medium">
+            <i class="bi bi-plus-lg me-1"></i> Thêm mới
+        </a>
+    </div>
+
+    <div class="card border-0 shadow rounded-4 overflow-hidden">
+
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between">
+            <div class="input-group input-group-sm" style="max-width: 300px;">
+                <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control bg-light border-0" placeholder="Tìm kiếm menu...">
+            </div>
+            <div>
+                <button class="btn btn-sm btn-light border me-1" onclick="expandAll()">
+                    <i class="bi bi-arrows-expand"></i> Mở hết
+                </button>
+                <button class="btn btn-sm btn-light border" onclick="collapseAll()">
+                    <i class="bi bi-arrows-collapse"></i> Thu gọn
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle border-bottom mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="ps-4">Tên Menu</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col" class="text-center">Thứ tự</th>
+                        <th scope="col" class="text-end pe-4">Chức năng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.NavigationMenus != null && Model.NavigationMenus.Any())
+                    {
+                        var parents = Model.NavigationMenus.Where(x => x.ParentId == null).OrderBy(x => x.DisplayOrder);
+
+                        foreach (var parent in parents)
+                        {
+                            var children = Model.NavigationMenus.Where(x => x.ParentId == parent.Id).OrderBy(x => x.DisplayOrder).ToList();
+                            var hasChild = children.Any();
+
+                            // DÒNG CHA
+                            <tr class="parent-row cursor-pointer" onclick="toggleMenu('child-@parent.Id', this)">
+                                <td class="ps-4 fw-bold text-dark text-uppercase">
+                                    @if (hasChild)
+                                    {
+                                        <i class="bi bi-caret-right-fill text-muted me-2 transition-icon"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-circle-fill text-muted me-2" style="font-size: 6px; vertical-align: middle;"></i>
+                                    }
+                                    @parent.Name
+                                </td>
+
+                                <td>
+                                    @if (parent.IsVisible)
+                                    {
+                                        <span class="badge bg-success bg-opacity-10 text-success">Hiện</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary">Ẩn</span>
+                                    }
+                                </td>
+                                <td class="text-center">@parent.DisplayOrder</td>
+
+                                <td class="text-end pe-4" onclick="stopProp(event)">
+                                    <a asp-page="./Edit" asp-route-id="@parent.Id" class="btn btn-sm btn-outline-primary me-1">Sửa</a>
+                                    <a asp-page="./Delete" asp-route-id="@parent.Id" class="btn btn-sm btn-outline-danger">Xóa</a>
+                                </td>
+                            </tr>
+
+                            if (hasChild)
+                            {
+                            <tbody id="child-@parent.Id" style="display: none; background-color: #f8f9fa;">
+                                @foreach (var child in children)
+                                {
+                                    // DÒNG CON
+                                    <tr>
+                                        <td class="ps-5 position-relative">
+                                            <div class="tree-connector"></div>
+                                            <i class="bi bi-arrow-return-right text-muted me-2 ms-3"></i>
+                                            <span class="text-secondary">@child.Name</span>
+                                        </td>
+
+                                        <td class="ps-4">
+                                            @if (child.IsVisible)
+                                            {
+                                                <i class="bi bi-check-circle-fill text-success small"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-eye-slash-fill text-secondary small"></i>
+                                            }
+                                        </td>
+                                        <td class="text-center text-muted small">@child.DisplayOrder</td>
+                                        <td class="text-end pe-4">
+                                            <a asp-page="./Edit" asp-route-id="@child.Id" class="text-secondary me-2"><i class="bi bi-pencil"></i></a>
+                                            <a asp-page="./Delete" asp-route-id="@child.Id" class="text-danger"><i class="bi bi-trash"></i></a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        }
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox display-4 opacity-50"></i>
+                            <p class="mt-3">Chưa có dữ liệu.</p>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    .transition-icon {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .rotate-90 {
+        transform: rotate(90deg);
+    }
+
+    .tree-connector {
+        position: absolute;
+        left: 28px;
+        top: -50%;
+        bottom: 50%;
+        width: 2px;
+        background-color: #dee2e6;
+    }
+
+        .tree-connector::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 15px;
+            height: 2px;
+            background-color: #dee2e6;
+        }
+
+    .parent-row:hover {
+        background-color: #f1f3f5;
+    }
+</style>
+
+<script>
+    function stopProp(e) {
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        else if (window.event) { window.event.cancelBubble = true; }
+    }
+
+    function toggleMenu(targetId, element) {
+        var subMenu = document.getElementById(targetId);
+        var icon = element.querySelector('.transition-icon');
+
+        // Mặc định là none nếu chưa set
+        var currentDisplay = window.getComputedStyle(subMenu).display;
+
+        if (currentDisplay === "none") {
+            subMenu.style.display = "table-row-group";
+            if(icon) icon.classList.add("rotate-90");
+        } else {
+            subMenu.style.display = "none";
+            if(icon) icon.classList.remove("rotate-90");
+        }
+    }
+
+    function expandAll() {
+        document.querySelectorAll('tbody[id^="child-"]').forEach(el => el.style.display = 'table-row-group');
+        document.querySelectorAll('.transition-icon').forEach(el => el.classList.add('rotate-90'));
+    }
+
+    function collapseAll() {
+        document.querySelectorAll('tbody[id^="child-"]').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.transition-icon').forEach(el => el.classList.remove('rotate-90'));
+    }
+</script>

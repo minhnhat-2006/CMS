@@ -1,0 +1,19 @@
+﻿@page
+@model CMS.Pages.Trang.DeleteModel
+@{
+    ViewData["Title"] = "Xóa trang";
+}
+
+<div class="container py-5" style="max-width: 500px;">
+    <div class="card shadow border-0 rounded-4 text-center">
+        <div class="card-body p-5">
+            <h3 class="text-danger fw-bold mb-3">Xác nhận xóa?</h3>
+            <p class="text-muted mb-4">Bạn muốn xóa: <strong>@Model.ContentPageItem.Title</strong>?</p>
+            <form method="post">
+                <input type="hidden" asp-for="ContentPageItem.Id" />
+                <button type="submit" class="btn btn-danger rounded-pill fw-bold w-100 mb-2">Xóa ngay</button>
+                <a asp-page="./Index" class="btn btn-light rounded-pill w-100">Quay lại</a>
+            </form>
+        </div>
+    </div>
+</div>

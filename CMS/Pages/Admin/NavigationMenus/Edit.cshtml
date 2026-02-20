@@ -1,0 +1,92 @@
+﻿@page 
+@model CMS.Pages.NavigationMenus.EditModel
+@{
+    ViewData["Title"] = "Chỉnh sửa Menu";
+}
+
+<div class="container py-5" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white py-3">
+            @* Kiểm tra null khi hiển thị tên *@
+            <h5 class="mb-0 fw-bold text-primary">Chỉnh sửa: @(Model.NavigationMenu?.Name ?? "Menu")</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="post">
+                <input type="hidden" asp-for="NavigationMenu.Id" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên Menu</label>
+                    <input asp-for="NavigationMenu.Name" class="form-control" />
+                    <span asp-validation-for="NavigationMenu.Name" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Menu Cha</label>
+                    <select asp-for="NavigationMenu.ParentId" class="form-select" asp-items="ViewBag.ParentId">
+                        <option value="">-- Là Menu Gốc (Cấp 1) --</option>
+                    </select>
+                </div>
+
+                <div class="card mb-3 bg-light border-primary border-opacity-25">
+                    <div class="card-body">
+                        <label class="form-label fw-bold text-primary">
+                            <i class="bi bi-link-45deg"></i> Liên kết Bài viết
+                        </label>
+                        <select asp-for="NavigationMenu.ContentPageId" class="form-select" asp-items="ViewBag.PageList">
+                            <option value="">-- Không liên kết --</option>
+                        </select>
+                        <small class="text-muted d-block mt-2">
+                            Menu sẽ tự động cập nhật link khi bài viết đổi tên.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Hoặc Link thủ công</label>
+                    <div class="input-group">
+                        <input asp-for="NavigationMenu.Url" id="txtUrl" class="form-control" placeholder="https://..." />
+
+                        <select class="form-select" id="ddlUrlSelect" style="max-width: 150px;">
+                            <option value="">-- Mẫu --</option>
+                            @if (ViewData["AvailablePages"] != null)
+                            {
+                                foreach (var item in (List<SelectListItem>)ViewData["AvailablePages"])
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Thứ tự</label>
+                        <input asp-for="NavigationMenu.DisplayOrder" class="form-control" type="number" />
+                    </div>
+                    <div class="col-md-6 mb-3 d-flex align-items-center pt-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" asp-for="NavigationMenu.IsVisible" />
+                            <label class="form-check-label" asp-for="NavigationMenu.IsVisible">Hiển thị</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary rounded-pill fw-bold">Lưu thay đổi</button>
+                    <a asp-page="./Index" class="btn btn-light rounded-pill text-muted">Hủy bỏ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Sửa lại JS để không dùng inline 'onchange' gây warning
+    document.getElementById("ddlUrlSelect").addEventListener("change", function() {
+        var selectedValue = this.value;
+        if (selectedValue) {
+            document.getElementById("txtUrl").value = selectedValue;
+        }
+    });
+</script>

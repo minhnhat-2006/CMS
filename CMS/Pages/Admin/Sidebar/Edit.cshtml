@@ -1,0 +1,98 @@
+﻿@page "{id:int}"
+@model CMS.Pages.Sidebar.EditModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa Sidebar";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-warning"><i class="bi bi-pencil-square"></i> Chỉnh sửa Sidebar</h2>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-4">
+            <form method="post">
+                @* QUAN TRỌNG: Giữ ID để hệ thống biết đang sửa dòng nào *@
+                <input type="hidden" asp-for="SidebarItem.Id" />
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Tiêu đề (Title) <span class="text-danger">*</span></label>
+                        <input asp-for="SidebarItem.Title" class="form-control" />
+                        <span asp-validation-for="SidebarItem.Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Thứ tự hiển thị</label>
+                        <input asp-for="SidebarItem.SortOrder" class="form-control" type="number" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nội dung</label>
+                    <textarea asp-for="SidebarItem.Content" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="SidebarItem.Content" class="text-danger"></span>
+                </div>
+
+                <div class="card p-3 mb-4 bg-light border-warning border-opacity-50">
+                    <label class="form-label fw-bold text-dark">
+                        <i class="bi bi-diagram-3-fill"></i> Hiển thị ở Menu nào?
+                    </label>
+
+                    @* Sửa Category thành MenuId và dùng ViewBag.MenuId *@
+                    <select asp-for="SidebarItem.MenuId" class="form-select" asp-items="ViewBag.MenuId">
+                        <option value="">-- Chọn Menu cha (Hoặc để trống) --</option>
+                    </select>
+                    <span asp-validation-for="SidebarItem.MenuId" class="text-danger"></span>
+
+                    <small class="text-muted mt-1 d-block">
+                        Đổi Menu tại đây sẽ di chuyển Sidebar sang trang khác ngay lập tức.
+                    </small>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-link-45deg"></i> Liên kết bài viết nội bộ
+                        </label>
+                        <select asp-for="SidebarItem.ContentPageId" class="form-select" asp-items="ViewBag.PageList">
+                            <option value="">-- Không liên kết --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-box-arrow-up-right"></i> Link ngoài
+                        </label>
+                        <input asp-for="SidebarItem.LinkUrl" class="form-control" placeholder="https://..." />
+                    </div>
+                </div>
+
+                <div class="mb-4 form-check form-switch">
+                    <input asp-for="SidebarItem.IsVisible" class="form-check-input" type="checkbox" />
+                    <label class="form-check-label fw-bold" asp-for="SidebarItem.IsVisible">
+                        Hiển thị ngay (Active)
+                    </label>
+                </div>
+
+                <hr />
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <a asp-page="./Index" class="btn btn-secondary px-4">
+                        <i class="bi bi-arrow-left"></i> Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn btn-warning px-4 fw-bold text-dark">
+                        <i class="bi bi-check-circle-fill"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

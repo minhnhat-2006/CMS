@@ -1,0 +1,329 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Đại học Xây Dựng Miền Trung (Đà Nẵng)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CMS.styles.css" asp-append-version="true" />
+
+    <style>
+        :root {
+            --muce-primary: #003b7e;
+            --muce-hover: #0056b3;
+            --header-height: 110px; /* Chiều cao dự kiến để chỉnh padding body */
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            padding-top: var(--header-height); /* Đẩy nội dung xuống */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- 1. TOP HEADER --- */
+        .top-header-bar {
+            background: linear-gradient(90deg, var(--muce-primary) 0%, #002a5c 100%);
+            color: #ffffff;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .school-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .school-logo {
+            height: 45px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            transition: transform 0.3s;
+        }
+
+        .school-name-hust {
+            padding-left: 12px;
+            border-left: 1px solid rgba(255,255,255,0.2);
+            margin-left: 12px;
+        }
+
+            .school-name-hust h1 {
+                font-size: 0.9rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                line-height: 1.1;
+                margin-bottom: 0;
+                letter-spacing: 0.5px;
+            }
+
+            .school-name-hust p {
+                font-size: 0.7rem;
+                font-weight: 300;
+                text-transform: uppercase;
+                line-height: 1.1;
+                letter-spacing: 1px;
+                opacity: 0.9;
+                margin-bottom: 0;
+            }
+
+        /* User Top Links */
+        .top-user-links a {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.8rem;
+            text-decoration: none;
+            margin-left: 15px;
+            transition: color 0.2s;
+        }
+
+            .top-user-links a:hover {
+                color: #fff;
+                text-decoration: underline;
+            }
+
+        /* --- 2. MAIN NAVBAR --- */
+        .main-nav-hust {
+            background-color: #fff;
+            border-bottom: 3px solid var(--muce-primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            padding: 0;
+        }
+
+            .main-nav-hust .navbar-nav .nav-link {
+                color: #333;
+                font-weight: 600;
+                font-size: 0.9rem;
+                padding: 1rem 1.2rem !important;
+                text-transform: uppercase;
+                position: relative;
+            }
+
+                .main-nav-hust .navbar-nav .nav-link:hover,
+                .main-nav-hust .navbar-nav .nav-item.active .nav-link {
+                    color: var(--muce-primary);
+                    background-color: #f8f9fa;
+                }
+
+                /* Hiệu ứng gạch chân */
+                .main-nav-hust .navbar-nav .nav-link::after {
+                    content: '';
+                    position: absolute;
+                    width: 0;
+                    height: 3px;
+                    bottom: 0;
+                    left: 0;
+                    background-color: var(--muce-primary);
+                    transition: width 0.3s ease;
+                }
+
+                .main-nav-hust .navbar-nav .nav-link:hover::after {
+                    width: 100%;
+                }
+
+        /* Dropdown - Code mới fix lỗi */
+        .dropdown-menu {
+            border-top: 3px solid var(--muce-primary);
+            border-radius: 0 0 5px 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 0;
+            padding: 0; /* Xóa padding thừa để hover kín viền */
+            overflow: hidden; /* Bo góc mượt hơn */
+        }
+
+        .dropdown-item {
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border-bottom: 1px solid #eee;
+            color: #333 !important; /* Màu mặc định đen */
+            background: #fff !important; /* Nền mặc định trắng */
+            transition: all 0.2s; /* Hiệu ứng chuyển màu mượt */
+        }
+
+            .dropdown-item:last-child {
+                border-bottom: none;
+            }
+
+        /* Dùng html body để tăng độ ưu tiên lên cao nhất + !important */
+        html body .dropdown-menu .dropdown-item:hover,
+        html body .dropdown-menu .dropdown-item:focus,
+        html body .dropdown-menu .dropdown-item:active {
+            background: #003b7e !important; /* Dùng background (không phải background-color) để đè hết */
+            color: #ffffff !important; /* Chữ trắng */
+            opacity: 1 !important; /* Chống mờ */
+        }
+
+        /* Thêm :focus để khi bấm vào hoặc dùng phím tab cũng nhận màu */
+        .dropdown-item:hover,
+        .dropdown-item:focus {
+            background-color: var(--muce-primary) !important; /* Dùng !important để bắt buộc đổi nền xanh */
+            color: #ffffff !important; /* Bắt buộc chữ trắng */
+        }
+
+        /* 🌟 CSS MỚI: KÍCH HOẠT MENU THẢ XUỐNG KHI HOVER (RÊ CHUỘT) 🌟 */
+        @@media all and (min-width: 992px) {
+            /* Khi rê chuột vào thẻ li có class dropdown thì hiện thẻ dropdown-menu bên trong */
+            .main-nav-hust .navbar-nav .dropdown:hover .dropdown-menu {
+                display: block;
+                animation: fadeIn 0.3s ease;
+                margin-top: 0;
+            }
+            /* Xoay mũi tên khi rê chuột */
+            .main-nav-hust .navbar-nav .dropdown:hover > .nav-link > i {
+                transform: rotate(180deg);
+                transition: transform 0.3s ease;
+            }
+
+            .main-nav-hust .navbar-nav .nav-link > i {
+                transition: transform 0.3s ease;
+            }
+        }
+
+        /* Hiệu ứng mờ dần cho menu xổ xuống */
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- 3. FOOTER --- */
+        footer {
+            margin-top: auto; /* Đẩy footer xuống đáy */
+            background-color: #f1f1f1;
+            padding: 20px 0;
+            border-top: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 991px) {
+            :root {
+                --header-height: 80px;
+            }
+
+            .school-name-hust p {
+                display: none;
+            }
+
+            .school-name-hust h1 {
+                font-size: 0.8rem;
+            }
+
+            .top-user-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header id="header" class="fixed-top w-100">
+        <div class="top-header-bar">
+            <div class="container d-flex align-items-center justify-content-between">
+                <a href="/" class="text-decoration-none text-white school-info">
+                    <img src="https://muce.edu.vn/uploads/images/logo.png" alt="Logo" class="school-logo">
+                    <div class="school-name-hust">
+                        <h1>ĐẠI HỌC XÂY DỰNG MIỀN TRUNG</h1>
+                        <p>PHÂN HIỆU TẠI THÀNH PHỐ ĐÀ NẴNG</p>
+                    </div>
+                </a>
+
+                <div class="top-user-links d-flex align-items-center">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <span class="me-3">
+                            <i class="bi bi-person-circle"></i> Xin chào, <b>@User.Identity.Name</b>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">ADMIN</span>
+                                <a href="/Admin/Dashboard" class="btn btn-sm btn-warning ms-2 fw-bold text-dark rounded-pill px-3 shadow-sm" style="text-decoration: none;">
+                                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                                </a>
+                            }
+                        </span>
+
+                        <form class="form-inline d-inline" asp-page="/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                            <button type="submit" class="btn btn-sm btn-outline-light border-0 ms-2">
+                                <i class="fa fa-sign-out-alt"></i> Thoát
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-page="/Login" class="btn btn-sm btn-light text-primary fw-bold rounded-pill px-3">
+                            <i class="fa fa-user me-1"></i> Đăng nhập
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <nav class="navbar navbar-expand-lg main-nav-hust">
+            <div class="container">
+                <button class="navbar-toggler ms-auto my-2" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavContent">
+                    <span class="navbar-toggler-icon"></span> MENU
+                </button>
+
+                <div class="collapse navbar-collapse justify-content-center" id="mainNavContent">
+                    <ul class="navbar-nav">
+                        @await Component.InvokeAsync("MainNavigation")
+
+                        <li class="nav-item d-lg-none mt-2 border-top pt-2">
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <a class="nav-link text-warning fw-bold" href="/Admin/Dashboard">
+                                        <i class="fas fa-tachometer-alt"></i> Quản trị Dashboard
+                                    </a>
+                                }
+                                <a class="nav-link" asp-page="/Logout">
+                                    <i class="fa fa-sign-out-alt text-danger"></i> Đăng xuất
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="nav-link" asp-page="/Login">
+                                    <i class="fa fa-user text-primary"></i> Đăng nhập hệ thống
+                                </a>
+                            }
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container my-5">
+        <main role="main" class="pb-3" style="min-height: 400px;">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer>
+        <div class="container text-center">
+            <p class="mb-1 fw-bold text-uppercase" style="color: var(--muce-primary)">Phân hiệu Trường Đại học Xây dựng Miền Trung tại Đà Nẵng</p>
+            <p class="mb-0 text-muted small">&copy; 2026 - Bản quyền thuộc về nhà trường. Powered by .NET Core CMS.</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,53 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="text-center mb-5">
+    <h1 class="display-4">Tin Tức Mới Nhất</h1>
+</div>
+
+<div class="row">
+    @if (Model.LatestNews != null)
+    {
+        @foreach (var item in Model.LatestNews)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            @* QUAN TRỌNG: Dùng asp-page để sinh link tự động *@
+                            @* Nó sẽ tự tạo ra: /bai-viet/15/tieu-de-bai-viet *@
+                            <a asp-page="/PageDetail"
+                               asp-route-id="@item.Id"
+                               asp-route-slug="@item.Slug"
+                               class="text-decoration-none text-dark">
+                                @item.Title
+                            </a>
+                        </h5>
+                        <div class="card-text text-muted">
+                            @{
+                                var rawContent = item.Content ?? "";
+                                // Cắt chuỗi an toàn hơn để tránh lỗi nếu chuỗi quá ngắn
+                                var shortDesc = rawContent.Length > 100
+                                ? rawContent.Substring(0, 100) + "..."
+                                : rawContent;
+                            }
+                            @Html.Raw(shortDesc)
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0">
+                        @* Link nút bấm cũng phải sửa lại *@
+                        <a asp-page="/PageDetail"
+                           asp-route-id="@item.Id"
+                           asp-route-slug="@item.Slug"
+                           class="btn btn-primary btn-sm rounded-pill">
+                            Xem chi tiết &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,191 @@
+﻿@page
+@model CMS.Pages.Admin.Wizard.Step1_MenuModel
+@{
+    ViewData["Title"] = "Bước 1: Tạo Menu";
+}
+
+<style>
+    /* CSS CHO THANH TIẾN TRÌNH WIZARD */
+    .wizard-progress {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin-bottom: 2.5rem;
+        padding: 0 2rem;
+    }
+
+        .wizard-progress::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 2rem;
+            right: 2rem;
+            height: 4px;
+            background-color: #e9ecef;
+            z-index: 1;
+            transform: translateY(-50%);
+            border-radius: 2px;
+        }
+
+    .step-item {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        background: #f8f9fa; /* Màu nền web để che cái vạch đi */
+        padding: 0 10px;
+    }
+
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.3rem;
+        margin: 0 auto 0.5rem auto;
+        border: 4px solid #fff;
+        transition: all 0.3s ease;
+    }
+
+    .step-text {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    /* Đang ở bước này (Active) */
+    .step-item.active .step-circle {
+        background-color: #0d6efd;
+        color: #fff;
+        box-shadow: 0 0 0 5px rgba(13, 110, 253, 0.2);
+    }
+
+    .step-item.active .step-text {
+        color: #0d6efd;
+    }
+</style>
+
+<div class="container py-5">
+
+    <div class="wizard-progress">
+        <div class="step-item active">
+            <div class="step-circle">1</div>
+            <div class="step-text">Tạo Menu</div>
+        </div>
+        <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-text">Viết bài</div>
+        </div>
+        <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-text">Cấu hình Sidebar</div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-7">
+            <div class="card shadow border-0 rounded-4 h-100">
+                <div class="card-header bg-dark text-white py-3 px-4">
+                    <h5 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Thiết lập Menu</h5>
+                </div>
+
+                <div class="card-body p-4">
+                    @if (Model.TargetParentId > 0)
+                    {
+                        <div class="alert alert-info border-0 shadow-sm rounded-3">
+                            <i class="bi bi-diagram-3 fs-5 me-2"></i> Bạn đang tạo mục con cho: <strong class="fs-5">@Model.ParentName</strong>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary border-0 shadow-sm rounded-3">
+                            <i class="bi bi-hdd-network fs-5 me-2"></i> Bạn đang tạo <strong>Menu Gốc (Cấp 1)</strong>
+                        </div>
+                    }
+
+                    <form method="post">
+                        <input type="hidden" asp-for="TargetParentId" />
+
+                        <div class="mb-4 mt-2">
+                            <label class="form-label fw-bold text-uppercase text-muted" style="font-size: 0.85rem;">Tên Menu (*)</label>
+                            <input asp-for="Menu.Name" id="menuNameInput" class="form-control form-control-lg fw-bold text-primary" placeholder="Nhập tên hiển thị..." required autocomplete="off" />
+                        </div>
+
+                        <div class="row mb-5 bg-light p-3 rounded-3 mx-0">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Thứ tự hiển thị</label>
+                                <input asp-for="Menu.DisplayOrder" type="number" class="form-control" />
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end justify-content-end">
+                                <div class="form-check form-switch pb-2 fs-5">
+                                    <input class="form-check-input" type="checkbox" asp-for="Menu.IsVisible">
+                                    <label class="form-check-label fs-6 ms-2 mt-1 fw-bold text-dark" asp-for="Menu.IsVisible">Hiển thị Menu</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end flex-wrap gap-2 border-top pt-4">
+                            <button type="submit" name="SubmitAction" value="sibling" class="btn btn-outline-success fw-bold">
+                                <i class="bi bi-node-plus"></i> Lưu & Thêm CÙNG CẤP
+                            </button>
+
+                            <button type="submit" name="SubmitAction" value="child" class="btn btn-outline-info fw-bold">
+                                <i class="bi bi-diagram-2"></i> Lưu & Thêm CON
+                            </button>
+
+                            <button type="submit" name="SubmitAction" value="next" class="btn btn-primary px-4 fw-bold shadow">
+                                Qua Bước 2 <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card bg-light border-0 rounded-4 h-100 shadow-sm">
+                <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center">
+
+                    <div class="mb-4 opacity-50">
+                        <i class="bi bi-laptop" style="font-size: 4rem;"></i>
+                    </div>
+                    <h6 class="text-muted text-uppercase fw-bold tracking-wide mb-4">Xem trước ngoài Trang chủ</h6>
+
+                    <div class="bg-white p-3 rounded-pill shadow d-inline-block border w-100" style="max-width: 350px;">
+                        <span class="text-secondary me-3 small d-none d-sm-inline">Trang chủ</span>
+
+                        <span class="fw-bold text-primary border-bottom border-primary border-2 pb-1 fs-5 px-2" id="menuPreviewText">Tên Menu</span>
+
+                        <span class="text-secondary ms-3 small d-none d-sm-inline">Liên hệ</span>
+                    </div>
+
+                    <p class="text-muted small mt-4 opacity-75">
+                        <i class="bi bi-info-circle me-1"></i> Giao diện nháp để giúp bạn hình dung độ dài của Tên Menu khi hiển thị thực tế.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const inputField = document.getElementById('menuNameInput');
+        const previewText = document.getElementById('menuPreviewText');
+
+        // Bắt sự kiện gõ phím
+        inputField.addEventListener('input', function (e) {
+            let text = e.target.value.trim();
+            // Nếu có chữ thì hiện chữ đó, nếu xóa hết thì hiện chữ mặc định
+            previewText.innerText = text ? text : 'Tên Menu';
+        });
+    });
+</script>

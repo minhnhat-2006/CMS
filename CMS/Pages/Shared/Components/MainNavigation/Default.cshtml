@@ -1,0 +1,79 @@
+﻿@model IEnumerable<CMS.Models.NavigationMenu>
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    // Lấy đường dẫn hiện tại để tô màu menu đang chọn (Active)
+    var currentPath = HttpContextAccessor.HttpContext?.Request.Path.Value?.ToLower() ?? "";
+}
+
+@if (Model != null && Model.Any())
+{
+    @* Sắp xếp Menu cha theo thứ tự hiển thị *@
+    foreach (var item in Model.OrderBy(x => x.DisplayOrder))
+    {
+        // -----------------------------------------------------------
+        // 1. TÍNH TOÁN LINK CHO MENU CHA
+        // -----------------------------------------------------------
+        string menuUrl = item.Url;
+
+        // Nếu có liên kết bài viết -> Tạo link chuẩn: /bai-viet/id/slug
+        if (item.ContentPageId.HasValue && item.LinkedPage != null)
+        {
+            menuUrl = $"/bai-viet/{item.LinkedPage.Id}/{item.LinkedPage.Slug}";
+        }
+
+        // Xử lý link trống
+        if (string.IsNullOrEmpty(menuUrl)) menuUrl = "#";
+
+        // Kiểm tra xem có đang đứng ở trang này không để Active
+        string activeClass = (menuUrl != "#" && currentPath.Contains(menuUrl.ToLower())) ? "active fw-bold text-primary" : "";
+
+        // Kiểm tra menu con
+        bool hasChildren = item.Children != null && item.Children.Any(c => c.IsVisible);
+
+        if (hasChildren)
+        {
+            /* === TRƯỜNG HỢP 1: MENU CÓ CON (Dropdown) === */
+            // 🌟 SỬA LỖI: Thêm class "custom-hover-dropdown" vào đây
+            <li class="nav-item dropdown custom-hover-dropdown">
+
+                <a class="nav-link text-uppercase @activeClass" href="@menuUrl" id="menu_@item.Id">
+                    @item.Name <i class="bi bi-chevron-down ms-1" style="font-size: 0.8rem;"></i>
+                </a>
+
+                <ul class="dropdown-menu shadow border-0" aria-labelledby="menu_@item.Id">
+                    @foreach (var child in item.Children.Where(c => c.IsVisible).OrderBy(c => c.DisplayOrder))
+                    {
+                        // -----------------------------------------------------------
+                        // 2. TÍNH TOÁN LINK CHO MENU CON
+                        // -----------------------------------------------------------
+                        string childUrl = child.Url;
+
+                        if (child.ContentPageId.HasValue && child.LinkedPage != null)
+                        {
+                            childUrl = $"/bai-viet/{child.LinkedPage.Id}/{child.LinkedPage.Slug}";
+                        }
+
+                        if (string.IsNullOrEmpty(childUrl)) childUrl = "#";
+
+                        // Active cho menu con
+                        string childActive = (childUrl != "#" && currentPath.Contains(childUrl.ToLower())) ? "active bg-primary text-white fw-bold" : "";
+
+                        <li>
+                            <a class="dropdown-item @childActive" href="@childUrl">@child.Name</a>
+                        </li>
+                    }
+                </ul>
+            </li>
+        }
+        else
+        {
+            /* === TRƯỜNG HỢP 2: MENU ĐƠN === */
+            <li class="nav-item">
+                <a class="nav-link text-uppercase @activeClass" href="@menuUrl">
+                    @item.Name
+                </a>
+            </li>
+        }
+    }
+}

@@ -1,0 +1,45 @@
+﻿@page "{id:int}"
+@model CMS.Pages.Sidebar.DeleteModel
+
+@{
+    ViewData["Title"] = "Xóa Sidebar";
+}
+
+<h2 class="text-danger">Xóa Sidebar</h2>
+<h3>Bạn có chắc chắn muốn xóa mục này không?</h3>
+<div class="alert alert-warning">
+    Hành động này không thể hoàn tác!
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Tiêu đề:</dt>
+            <dd class="col-sm-9 fw-bold">@Model.SidebarItem.Title</dd>
+
+            <dt class="col-sm-3">Vị trí (Category):</dt>
+            <dd class="col-sm-9">@(Model.SidebarItem.Category ?? "Tất cả")</dd>
+
+            <dt class="col-sm-3">Trạng thái:</dt>
+            <dd class="col-sm-9">
+                @if (Model.SidebarItem.IsVisible)
+                {
+                    <span class="badge bg-success">Đang hiện</span>
+                }
+                else
+                {
+
+                    <span class="badge bg-secondary">Đang ẩn</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<form method="post">
+    <input type="hidden" asp-for="SidebarItem.Id" />
+    <button type="submit" class="btn btn-danger btn-lg">
+        <i class="bi bi-trash"></i> Xác nhận xóa
+    </button>
+    <a href="/Admin/Sidebar" class="btn btn-secondary btn-lg">Hủy bỏ</a>
+</form>

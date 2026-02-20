@@ -1,0 +1,152 @@
+﻿@page "/admin-success/{id:int}"
+@model CMS.Pages.Admin.Wizard.WizardSuccessModel
+@{
+    ViewData["Title"] = "Hoàn tất xuất bản";
+
+    // CHỐT CHẶN TRIỆT ĐỂ LỖI NHẬN CON LÀM CHA (Giữ nguyên logic của bạn)
+    int targetParentId = Model.ParentId.HasValue ? Model.ParentId.Value : Model.CreatedMenuId;
+
+    // Lấy ID bài viết từ URL để truyền cho nút Sửa Sidebar
+    var currentId = RouteData.Values["id"];
+}
+
+<style>
+    body {
+        background-color: #f4f6f9;
+    }
+
+    .success-icon-wrap {
+        width: 80px;
+        height: 80px;
+        background-color: #d1e7dd;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        box-shadow: 0 0 0 10px rgba(25, 135, 84, 0.1);
+        animation: pulse-success 2s infinite;
+    }
+
+    .success-icon {
+        font-size: 40px;
+        color: #198754;
+    }
+
+    .stat-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 100%;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border-color: #dee2e6;
+        }
+
+    .icon-box {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    @@keyframes pulse-success {
+        0% {
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.2);
+        }
+
+        70% {
+            box-shadow: 0 0 0 15px rgba(25, 135, 84, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
+        }
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-5">
+                <div class="success-icon-wrap mb-4">
+                    <i class="bi bi-check-lg success-icon"></i>
+                </div>
+                <h1 class="fw-bold text-dark mb-2">Xuất bản thành công!</h1>
+                <p class="text-muted fs-5">Hệ thống đã ghi nhận và tạo bài viết mới của bạn.</p>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-warning bg-opacity-10 text-warning me-3">
+                                <i class="bi bi-folder2-open"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold text-secondary text-uppercase" style="font-size: 13px;">Vị trí thư mục</h6>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">@Model.CreatedMenuName</h5>
+                        <small class="text-muted">
+                            Thuộc: @(string.IsNullOrEmpty(Model.ParentName) ? "Menu Gốc (Cao nhất)" : Model.ParentName)
+                        </small>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-primary bg-opacity-10 text-primary me-3">
+                                <i class="bi bi-link-45deg"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold text-secondary text-uppercase" style="font-size: 13px;">Đường dẫn (URL)</h6>
+                        </div>
+                        <a href="/@Model.Slug" target="_blank" class="text-primary fw-bold text-decoration-none d-block text-truncate mb-1 fs-5">
+                            /@Model.Slug
+                        </a>
+                        <small class="text-muted"><i class="bi bi-globe me-1"></i>Đã hiển thị (Live)</small>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-info bg-opacity-10 text-info me-3">
+                                <i class="bi bi-bar-chart-line"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold text-secondary text-uppercase" style="font-size: 13px;">Thống kê chuyên mục</h6>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-0">1 <span class="fs-6 fw-normal text-muted">bài viết</span></h3>
+                        <small class="text-success fw-bold"><i class="bi bi-arrow-up-short"></i> Vừa thêm mới</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 d-flex flex-wrap justify-content-center gap-3">
+
+                    <a asp-page="./Step1_Menu" asp-route-parentId="@targetParentId" class="btn btn-primary btn-lg rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center">
+                        <i class="bi bi-plus-circle me-2"></i> Thêm bài viết / mục con
+                    </a>
+
+                    <a asp-page="./Step3_Sidebar" asp-route-id="@currentId" class="btn btn-outline-primary btn-lg rounded-pill px-4 fw-bold d-flex align-items-center">
+                        <i class="bi bi-layout-sidebar-reverse me-2"></i> Chỉnh sửa Sidebar
+                    </a>
+
+                    <a asp-page="/Admin/Index" class="btn btn-light btn-lg rounded-pill px-4 border text-secondary fw-bold d-flex align-items-center hover-bg-light">
+                        <i class="bi bi-house-door me-2"></i> Về Dashboard
+                    </a>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

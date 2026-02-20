@@ -1,0 +1,85 @@
+﻿@page 
+@model CMS.Pages.NavigationMenus.CreateModel
+@{
+    ViewData["Title"] = "Thêm mới Menu";
+}
+
+<div class="container py-5" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold text-primary">Thêm Menu Mới</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="post">
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên Menu</label>
+                    <input asp-for="NavigationMenu.Name" class="form-control" placeholder="Ví dụ: Giới thiệu" />
+                    <span asp-validation-for="NavigationMenu.Name" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Menu Cha (Nếu có)</label>
+                    <select asp-for="NavigationMenu.ParentId" class="form-select" asp-items="ViewBag.ParentId">
+                        <option value="">-- Là Menu Gốc (Cấp 1) --</option>
+                    </select>
+                    <small class="text-muted">Để trống nếu đây là menu chính.</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Liên kết (URL)</label>
+
+                    <div class="input-group">
+                        <input asp-for="NavigationMenu.Url" id="txtUrl" class="form-control" placeholder="Nhập link (VD: /TinTuc hoặc https://google.com)" />
+
+                        <select class="form-select" id="ddlUrlSelect" style="max-width: 200px;" onchange="copyUrl()">
+                            <option value="">-- Chọn nhanh --</option>
+                            @if (ViewData["AvailablePages"] != null)
+                            {
+                                foreach (var item in (List<SelectListItem>)ViewData["AvailablePages"])
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <small class="text-muted">Nhập link thủ công hoặc chọn từ danh sách bên phải.</small>
+                    <span asp-validation-for="NavigationMenu.Url" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Thứ tự hiển thị</label>
+                        <input asp-for="NavigationMenu.DisplayOrder" class="form-control" type="number" value="0" />
+                    </div>
+
+                    <div class="col-md-6 mb-3 d-flex align-items-center pt-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" asp-for="NavigationMenu.IsVisible" checked />
+                            <label class="form-check-label" asp-for="NavigationMenu.IsVisible">Hiển thị ngay</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary rounded-pill fw-bold">Lưu lại</button>
+                    <a asp-page="Index" class="btn btn-light rounded-pill text-muted">Hủy bỏ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyUrl() {
+        var selectBox = document.getElementById("ddlUrlSelect");
+        var inputBox = document.getElementById("txtUrl");
+        var selectedValue = selectBox.value;
+
+        // Nếu người dùng chọn một giá trị, điền nó vào ô nhập
+        if (selectedValue) {
+            inputBox.value = selectedValue;
+        }
+    }
+</script>
