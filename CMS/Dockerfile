@@ -4,8 +4,8 @@ WORKDIR /src
 
 COPY . .
 
-RUN dotnet restore "CMS.csproj"
-RUN dotnet publish "CMS.csproj" -c Release -o /app/publish
+RUN dotnet restore "CMS/CMS.csproj"
+RUN dotnet publish "CMS/CMS.csproj" -c Release -o /app/publish
 
 # Stage 2: Run
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
