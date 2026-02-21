@@ -31,10 +31,10 @@ namespace CMS.Models
         public bool IsVisible { get; set; } = true;
 
         [Display(Name = "Ngày tạo")]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // ← THÊM DÒNG NÀY (Optional nhưng nên có)
-      
+
 
         // Navigation property
         public virtual ICollection<SidebarItem>? SidebarItems { get; set; }
