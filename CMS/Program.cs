@@ -13,7 +13,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(connectionString));
 
 // 1.2. DỊCH VỤ QUAN TRỌNG (Sửa lỗi InvalidOperationException)
 // Giúp truy cập HttpContext trong View/Menu
@@ -45,6 +45,17 @@ builder.Services.AddAuthorization(options =>
 // --- XÂY DỰNG APP ---
 var app = builder.Build();
 
+// ==========================================
+// TỰ ĐỘNG CHẠY MIGRATION KHI LÊN SERVER (RENDER)
+// Chú ý: Phải đặt ngay sau var app = builder.Build();
+// ==========================================
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    // Tự động tìm thư mục Migrations và bắn cấu trúc bảng vào DB
+    context.Database.Migrate();
+}
 
 // ==========================================
 // 2. CẤU HÌNH ĐƯỜNG ỐNG (PIPELINE)

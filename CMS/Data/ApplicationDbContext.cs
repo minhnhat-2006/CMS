@@ -9,7 +9,7 @@ namespace CMS.Data
             : base(options)
         {
         }
-
+        
         public DbSet<NavigationMenu> NavigationMenus { get; set; }
         public DbSet<ContentPage> ContentPages { get; set; }
         public DbSet<SidebarItem> SidebarItems { get; set; }

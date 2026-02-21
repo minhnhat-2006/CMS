@@ -3,8 +3,8 @@ using System;
 using CMS.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -18,44 +18,44 @@ namespace CMS.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "10.0.2")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("CMS.Models.ContentPage", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("HasSidebar")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsVisible")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -66,32 +66,29 @@ namespace CMS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("ContentPageId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("DisplayOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsVisible")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("ParentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Url")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -106,36 +103,36 @@ namespace CMS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("ContentPageId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsVisible")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("LinkUrl")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int?>("MenuId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("SortOrder")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -149,19 +146,19 @@ namespace CMS.Migrations
             modelBuilder.Entity("CMS.Models.TaiKhoan", b =>
                 {
                     b.Property<string>("TenDangNhap")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("HoTen")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("MatKhau")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("VaiTro")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("TenDangNhap");
 
@@ -176,7 +173,8 @@ namespace CMS.Migrations
 
                     b.HasOne("CMS.Models.NavigationMenu", "Parent")
                         .WithMany("Children")
-                        .HasForeignKey("ParentId");
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("LinkedPage");
 
