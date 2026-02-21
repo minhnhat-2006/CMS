@@ -2,12 +2,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# SỬA Ở ĐÂY: Trỏ đúng vào thư mục CMS/CMS để lấy file csproj
-COPY CMS/CMS/*.csproj ./
+# Copy file csproj từ thư mục gốc vào để restore
+COPY *.csproj ./
 RUN dotnet restore
 
-# Copy toàn bộ code từ thư mục CMS/CMS vào
-COPY CMS/CMS/ .
+# Copy tất cả file từ thư mục gốc vào (vì code bạn nằm ở gốc rồi)
+COPY . .
 RUN dotnet publish -c Release -o /app/publish
 
 # Stage 2: Run
