@@ -1,9 +1,12 @@
 ﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
+   
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Đại học Xây Dựng Miền Trung (Đà Nẵng)</title>
+    <link rel="shortcut icon" href="~/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="~/favicon.ico" type="image/x-icon" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -255,7 +258,7 @@
                             }
                         </span>
 
-                        <form class="form-inline d-inline" asp-page="/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
+                        <form class="d-inline" asp-page="/Logout" method="post">
                             <button type="submit" class="btn btn-sm btn-outline-light border-0 ms-2">
                                 <i class="fa fa-sign-out-alt"></i> Thoát
                             </button>

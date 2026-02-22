@@ -4,9 +4,11 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>df00c5cc-a760-4bca-aa06-8e04939cd82a</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.3" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.2" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
 			<PrivateAssets>all</PrivateAssets>

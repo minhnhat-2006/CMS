@@ -1,5 +1,6 @@
 ﻿using CMS.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +17,7 @@ var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// 1.2. DỊCH VỤ QUAN TRỌNG (Sửa lỗi InvalidOperationException)
+// 1.2. DỊCH VỤ QUAN TRỌNG
 // Giúp truy cập HttpContext trong View/Menu
 builder.Services.AddHttpContextAccessor();
 
@@ -29,17 +30,56 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Admin", "AdminOnly");
 });
 
-// 1.4. Cấu hình Authentication (Đăng nhập) & Authorization (Phân quyền)
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Login"; // Trang đăng nhập
-        options.AccessDeniedPath = "/Index"; // Trang khi bị từ chối
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    });
+// ==========================================
+// 1.4. CẤU HÌNH AUTHENTICATION & AUTHORIZATION
+// (Đã gộp Cookie và Google vào chung một luồng)
+// ==========================================
+var googleAuthConfig = builder.Configuration.GetSection("Authentication:Google");
 
+builder.Services.AddAuthentication(options =>
+{
+    // Đặt mặc định là dùng Cookie (để không bị nhảy thẳng sang Google khi vào trang cấm)
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(options =>
+{
+    options.LoginPath = "/Login"; // Trang đăng nhập
+    options.AccessDeniedPath = "/Index"; // Trang khi bị từ chối
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+})
+.AddGoogle(options =>
+{
+    // Thêm dấu ! ở cuối để thề với trình biên dịch là "Tôi chắc chắn trong JSON có mã này, yên tâm!"
+    options.ClientId = googleAuthConfig["ClientId"]!;
+    options.ClientSecret = googleAuthConfig["ClientSecret"]!;
+    options.CallbackPath = "/signin-google";
+
+    options.Events.OnCreatingTicket = context =>
+    {
+        // Thêm dấu ? để nếu Principal rỗng thì email tự động bằng rỗng, không bị crash
+        var email = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+
+        // Dùng string.IsNullOrEmpty để kiểm tra an toàn tuyệt đối
+        if (string.IsNullOrEmpty(email) || !email.EndsWith("@muce.edu.vn"))
+        {
+            throw new Exception("InvalidEmailDomain");
+        }
+        return Task.CompletedTask;
+    };
+
+    options.Events.OnRemoteFailure = context =>
+    {
+        // Dấu ? ở Response giúp tránh lỗi "Dereference of a possibly null reference"
+        context.Response?.Redirect("/Login?error=invalid_domain");
+        context.HandleResponse();
+        return Task.CompletedTask;
+    };
+});
+// Đăng ký quyền (Authorization)
 builder.Services.AddAuthorization(options =>
 {
+    // Định nghĩa cái tên 'AdminOnly' mà bạn đang dùng ở Razor Pages
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
 

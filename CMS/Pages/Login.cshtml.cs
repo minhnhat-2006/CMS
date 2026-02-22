@@ -7,26 +7,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-// QUAN TRỌNG: Thêm dòng using trỏ đến thư mục chứa DbContext và Model của bạn
-// Ví dụ: using TenDuAn.Data; 
-// Ví dụ: using TenDuAn.Models;
+using Microsoft.AspNetCore.Authentication.Google;
 
-namespace CMS.Pages // <-- Đổi tên namespace này cho đúng với dự án của bạn
+namespace CMS.Pages
 {
     public class LoginModel : PageModel
     {
-        // 1. Khai báo biến Database
-        // HÃY SỬA TÊN 'ApplicationDbContext' THÀNH TÊN ĐÚNG CỦA BẠN (Ví dụ: WebContext)
         private readonly ApplicationDbContext _context;
 
-        // 2. Hàm khởi tạo (Constructor) để nhận Database vào
-        public LoginModel(ApplicationDbContext context) // <-- Sửa tên ở đây nữa
+        public LoginModel(ApplicationDbContext context)
         {
             _context = context;
         }
 
         [BindProperty]
-        public string ErrorMessage { get; set; } = string.Empty; // Gán mặc định để hết lỗi null
+        public string ErrorMessage { get; set; } = string.Empty;
 
         [BindProperty]
         public string Username { get; set; } = string.Empty;
@@ -34,14 +29,35 @@ namespace CMS.Pages // <-- Đổi tên namespace này cho đúng với dự án 
         [BindProperty]
         public string Password { get; set; } = string.Empty;
 
-        public void OnGet()
+        // CHỈ GIỮ LẠI MỘT HÀM OnGet NÀY THÔI
+        public IActionResult OnGet()
         {
+            // CHỐT CHẶN: Nếu đã đăng nhập rồi thì không cho vào trang Login nữa
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                // Nếu là Admin thì ném thẳng vào phòng làm việc
+                if (User.IsInRole("Admin"))
+                {
+                    return RedirectToPage("/Admin/Dashboard");
+                }
+
+                // Dân thường thì mời ra trang chủ
+                return RedirectToPage("/Index");
+            }
+
+            // Nếu chưa đăng nhập thì mới hiện Form Login bình thường
+            return Page();
+        }
+
+        public IActionResult OnPostGoogleLogin()
+        {
+            var properties = new AuthenticationProperties { RedirectUri = Url.Page("/Index") };
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // 3. Tìm tài khoản trong Database
-            // Lưu ý: Đảm bảo bảng trong SQL tên là TaiKhoan, và Code Model cũng tên là TaiKhoan
+            // Tìm tài khoản trong Database
             var user = _context.TaiKhoan.FirstOrDefault(u => u.TenDangNhap == Username && u.MatKhau == Password);
 
             if (user != null)
@@ -61,7 +77,7 @@ namespace CMS.Pages // <-- Đổi tên namespace này cho đúng với dự án 
                 // Kiểm tra quyền để chuyển hướng
                 if (user.VaiTro == "Admin")
                 {
-                    return RedirectToPage("/Admin/Dashboard/Index");
+                    return RedirectToPage("/Admin/Dashboard/Index"); // Đã sửa lại đường dẫn cho chuẩn
                 }
                 else
                 {
