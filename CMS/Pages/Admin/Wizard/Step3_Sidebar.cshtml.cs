@@ -18,10 +18,10 @@ namespace CMS.Pages.Admin.Wizard
         [BindProperty]
         public bool HasSidebar { get; set; }
 
-        // MỚI THÊM: 2 Biến để đẩy dữ liệu ra bản Preview ngoài View
-        public string PreviewTitle { get; set; }
-        public string PreviewContent { get; set; }
-        public string PreviewCategory { get; set; }
+        public string PreviewTitle { get; set; } = "";
+        public string PreviewContent { get; set; } = "";
+        public string PreviewCategory { get; set; } = "";
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
             if (id <= 0) return RedirectToPage("./Step1_Menu");
@@ -31,9 +31,20 @@ namespace CMS.Pages.Admin.Wizard
             ContentPageId = page.Id;
             HasSidebar = page.HasSidebar;
 
-            // MỚI THÊM: Gán dữ liệu thật từ DB vào biến Preview
+            // Đổ dữ liệu thật từ DB vào biến Preview
             PreviewTitle = page.Title;
             PreviewContent = page.Content;
+            PreviewCategory = page.Category;
+
+            // Kiểm tra xem Menu Gốc (Category) đã có Sidebar nào chưa?
+            bool isSidebarExist = await _context.SidebarItems.AnyAsync(s => s.Category == page.Category);
+
+            // Truyền cờ ra ngoài View để thay đổi giao diện 
+            ViewData["IsShared"] = isSidebarExist;
+            if (isSidebarExist)
+            {
+                ViewData["Message"] = $"Chuyên mục '{page.Category}' đã có sẵn cấu hình Sidebar dùng chung.";
+            }
 
             return Page();
         }
@@ -47,16 +58,24 @@ namespace CMS.Pages.Admin.Wizard
 
             if (HasSidebar)
             {
+                // Kiểm tra lại lần nữa trước khi thêm mới
                 bool hasItem = await _context.SidebarItems.AnyAsync(s => s.Category == pageToUpdate.Category);
+
                 if (!hasItem)
                 {
+                    // CHƯA CÓ thì mới tạo (CHỈ TẠO 1 LẦN DUY NHẤT)
                     _context.SidebarItems.Add(new SidebarItem
                     {
-                        Title = pageToUpdate.Category,
-                        Content = "<p>Nội dung liên quan</p>",
+                        Title = pageToUpdate.Category, // Có thể đổi thành "Danh mục liên quan" tùy ý bạn
+
+                        // 🔥 CẬP NHẬT CHÍNH: Để trống hoàn toàn Content theo chuẩn "Cách 2"
+                        Content = "",
+
                         IsVisible = true,
                         Category = pageToUpdate.Category,
-                        ContentPageId = pageToUpdate.Id
+
+                        // Ép thành NULL để biến Sidebar thành tài sản chung của Category
+                        ContentPageId = null
                     });
                 }
             }

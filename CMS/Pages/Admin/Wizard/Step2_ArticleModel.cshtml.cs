@@ -24,20 +24,45 @@ namespace CMS.Pages.Admin.Wizard
 
         public string MenuName { get; set; } = "";
 
+        // ==================================================================
+        // 🔥 HÀM MỚI: Dò ngược cây phả hệ tìm Menu Gốc (Chống lỗi Menu nhiều cấp)
+        // ==================================================================
+        private async Task<string> GetRootCategoryNameAsync(int menuId)
+        {
+            var menu = await _context.NavigationMenus.FindAsync(menuId);
+            if (menu == null) return string.Empty;
+
+            // Dùng vòng lặp while để leo ngược lên tận đỉnh, dù là cháu hay chắt
+            while (menu.ParentId.HasValue && menu.ParentId.Value > 0)
+            {
+                var parent = await _context.NavigationMenus.FindAsync(menu.ParentId.Value);
+                if (parent == null) break;
+                menu = parent; // Gán lại để tiếp tục leo lên
+            }
+
+            // Thoát vòng lặp, lúc này menu chính là Menu Gốc ngoài cùng
+            return menu.Name;
+        }
+
         public async Task<IActionResult> OnGetAsync(int menuId)
         {
             if (menuId <= 0) return RedirectToPage("./Step1_Menu");
 
-            var menu = await _context.NavigationMenus.FindAsync(menuId);
-            if (menu == null) return RedirectToPage("./Step1_Menu");
+            // 1. Tìm Menu con vừa tạo ở Bước 1
+            var currentMenu = await _context.NavigationMenus.FindAsync(menuId);
+            if (currentMenu == null) return RedirectToPage("./Step1_Menu");
 
-            TargetMenuId = menu.Id;
-            MenuName = menu.Name;
+            TargetMenuId = currentMenu.Id;
+            MenuName = currentMenu.Name;
 
-            // Khởi tạo mặc định
+            // Khởi tạo các giá trị mặc định cho form
             ContentPage.IsVisible = true;
             ContentPage.HasSidebar = true;
-            ContentPage.Category = "general"; // Có thể đổi tùy ý
+
+            // ------------------------------------------------------------------
+            // 🔥 LOGIC TÌM MENU GỐC ĐỂ KẾ THỪA CATEGORY NGAY TRÊN GIAO DIỆN
+            // ------------------------------------------------------------------
+            ContentPage.Category = await GetRootCategoryNameAsync(currentMenu.Id);
 
             return Page();
         }
@@ -52,20 +77,26 @@ namespace CMS.Pages.Admin.Wizard
                 return Page();
             }
 
-            // 1. LƯU BÀI VIẾT VÀO DATABASE
+            var currentMenu = await _context.NavigationMenus.FindAsync(TargetMenuId);
+            if (currentMenu == null) return Page();
+
+            // ------------------------------------------------------------------
+            // 🔥 CHỐT CHẶN CUỐI CÙNG: ÉP BUỘC CATEGORY TỪ SERVER 
+            // ------------------------------------------------------------------
+            // Bất chấp HTML gửi lên cái gì, gọi hàm dò tìm Menu Gốc và đè lại dữ liệu
+            ContentPage.Category = await GetRootCategoryNameAsync(TargetMenuId);
+
+            // LƯU BÀI VIẾT VÀO DATABASE (Lúc này Category đã bị ép chuẩn 100%)
             _context.ContentPages.Add(ContentPage);
             await _context.SaveChangesAsync();
             // Lưu xong, ContentPage.Id sẽ có số mới
 
-            // 2. NỐI TƠ HỒNG: Gắn Bài Viết vào Menu
-            var menuToUpdate = await _context.NavigationMenus.FindAsync(TargetMenuId);
-            if (menuToUpdate != null)
-            {
-                menuToUpdate.ContentPageId = ContentPage.Id;
-                await _context.SaveChangesAsync();
-            }
+            // NỐI TƠ HỒNG: Gắn Bài Viết vào Menu
+            currentMenu.ContentPageId = ContentPage.Id;
+            _context.NavigationMenus.Update(currentMenu);
+            await _context.SaveChangesAsync();
 
-            // 3. ĐI TIẾP BƯỚC 3 (Mang theo ID của Bài viết)
+            // ĐI TIẾP BƯỚC 3 (Mang theo ID của Bài viết)
             return RedirectToPage("./Step3_Sidebar", new { id = ContentPage.Id });
         }
     }

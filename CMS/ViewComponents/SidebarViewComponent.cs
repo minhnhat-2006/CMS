@@ -15,31 +15,23 @@ namespace CMS.ViewComponents
 
         public async Task<IViewComponentResult> InvokeAsync(string? currentCategory)
         {
-            // 1. Query cơ bản
-            var query = _context.SidebarItems
+            // 1. Chỉ lấy 1 cái Cấu hình chung của Category này (Cái Vỏ)
+            var sidebarConfig = await _context.SidebarItems
                 .AsNoTracking()
-                .Include(x => x.ContentPage) // Include bảng ContentPages để lấy Slug cho Link (nếu có)
-                .Where(x => x.IsVisible == true);
+                .FirstOrDefaultAsync(x => x.Category == currentCategory && x.IsVisible);
 
-            // 2. Logic Lọc theo Category
-            if (!string.IsNullOrEmpty(currentCategory))
-            {
-                // Lấy các item thuộc Category này HOẶC item chung (Category = null)
-                query = query.Where(x => x.Category == currentCategory || x.Category == null);
-            }
-            else
-            {
-                // Nếu không có Category, chỉ lấy item chung
-                query = query.Where(x => x.Category == null);
-            }
-
-            // 3. Sắp xếp và Lấy dữ liệu
-            var items = await query
-                .OrderBy(x => x.SortOrder)
-                .ThenByDescending(x => x.Id)
+            // 2. Truy tìm TẤT CẢ bài viết thuộc Category này (Cái Ruột)
+            var relatedArticles = await _context.ContentPages
+                .AsNoTracking()
+                .Where(x => x.Category == currentCategory && x.IsVisible)
+                .OrderByDescending(x => x.Id)
                 .ToListAsync();
 
-            return View(items);
+            // 3. Đẩy cái vỏ vào ViewData, truyền cái ruột ra Model
+            ViewData["SidebarConfig"] = sidebarConfig;
+
+            // (Lưu ý: Bạn phải cập nhật file Giao diện Default.cshtml theo hướng dẫn ở tin nhắn trước của tôi)
+            return View(relatedArticles);
         }
     }
 }

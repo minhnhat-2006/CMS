@@ -66,7 +66,21 @@ namespace CMS.Pages.Admin.Wizard
             // LƯU VÀO DATABASE
             _context.NavigationMenus.Add(Menu);
             await _context.SaveChangesAsync();
-            // Vừa lưu xong, biến Menu.Id sẽ tự động có số ID mới tinh từ SQL Server!
+            // Vừa lưu xong, biến Menu.Id sẽ tự động có số ID mới tinh từ PostgreSQL!
+
+            // ------------------------------------------------------------------
+            // 🔥 BƯỚC QUAN TRỌNG: TÌM TÊN MENU CHA ĐỂ KẾ THỪA CATEGORY CHO BƯỚC 2
+            // ------------------------------------------------------------------
+            string rootCategoryName = Menu.Name; // Mặc định: Nếu là Menu Gốc thì lấy tên của chính nó
+
+            if (TargetParentId.HasValue && TargetParentId.Value > 0)
+            {
+                var parentMenu = await _context.NavigationMenus.FindAsync(TargetParentId.Value);
+                if (parentMenu != null)
+                {
+                    rootCategoryName = parentMenu.Name; // Nếu là Menu con -> Kế thừa tên Menu Cha! (VD: Lấy tên "giới thiệu")
+                }
+            }
 
             // ĐIỀU HƯỚNG BẰNG LOGIC CỨNG (KHÔNG THỂ SAI)
             if (SubmitAction == "sibling")
@@ -80,8 +94,8 @@ namespace CMS.Pages.Admin.Wizard
                 return RedirectToPage("./Step1_Menu", new { parentId = Menu.Id });
             }
 
-            // MẶC ĐỊNH: Qua bước 2
-            return RedirectToPage("./Step2_ArticleModel", new { menuId = Menu.Id });
+            // MẶC ĐỊNH: Qua bước 2 VÀ NÉM THEO TÊN CATEGORY ĐÃ KẾ THỪA
+            return RedirectToPage("./Step2_ArticleModel", new { menuId = Menu.Id, categoryName = rootCategoryName });
         }
     }
 }

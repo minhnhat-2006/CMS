@@ -20,6 +20,11 @@ namespace CMS.Models
         public int DisplayOrder { get; set; } = 0; // Dùng để sắp xếp menu
 
         public bool IsVisible { get; set; } = true;
+        [NotMapped]
+        public int PostCount { get; set; }
+
+        [NotMapped]
+        public int SidebarCount { get; set; }
 
         [ForeignKey("ParentId")]
         public virtual NavigationMenu? Parent { get; set; }

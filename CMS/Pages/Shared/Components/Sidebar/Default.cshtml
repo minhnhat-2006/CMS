@@ -1,8 +1,8 @@
 ﻿@using CMS.Models
-@model IEnumerable<SidebarItem>
+@model IEnumerable<ContentPage>
 
 <style>
-    /* CSS cho Sidebar */
+    /* Bấm thu gọn lại, giữ nguyên 100% CSS cũ của bạn ở đây nhé */
     .sidebar-widget {
         background: #fff;
         border: 1px solid #eee;
@@ -13,16 +13,15 @@
     }
 
     .sidebar-header {
-        background: #003366; /* Màu xanh đậm thương hiệu */
+        background: #003366;
         color: #fff;
         padding: 10px 15px;
         font-weight: bold;
         text-transform: uppercase;
         font-size: 0.9rem;
-        border-bottom: 2px solid #ffcc00; /* Viền vàng điểm nhấn */
+        border-bottom: 2px solid #ffcc00;
     }
 
-    /* ITEM LÀ LINK (Bấm được) */
     a.sidebar-item {
         display: block;
         padding: 12px 15px;
@@ -36,7 +35,7 @@
         a.sidebar-item:hover {
             background-color: #f0f8ff;
             color: #0056b3;
-            padding-left: 20px; /* Hiệu ứng trượt sang phải */
+            padding-left: 20px;
         }
 
         a.sidebar-item i {
@@ -45,7 +44,6 @@
             font-size: 0.8rem;
         }
 
-    /* ITEM LÀ NỘI DUNG TĨNH (Không bấm được, ví dụ: Hotline, Banner) */
     .sidebar-content-block {
         padding: 15px;
         font-size: 0.9rem;
@@ -63,66 +61,43 @@
 
 @if (Model != null && Model.Any())
 {
+    // Lấy cái Vỏ (Cấu hình) từ ViewData mà ViewComponent vừa ném ra
+    var config = ViewData["SidebarConfig"] as SidebarItem;
+
+    // Ưu tiên lấy Title của cấu hình, nếu không có thì lấy Category của bài viết đầu tiên
+    var title = config?.Title ?? (Model.First().Category ?? "Thông tin nổi bật");
+
     <div class="sidebar-wrapper">
         <div class="sidebar-widget">
 
-            @* 1. TIÊU ĐỀ: Lấy tên Category của item đầu tiên *@
+            @* 1. TIÊU ĐỀ SIDEBAR *@
             <div class="sidebar-header">
-                @{
-                    var firstItem = Model.First();
-                    // Nếu có Category thì hiện tên Category, không thì hiện "Thông tin"
-                    var title = !string.IsNullOrEmpty(firstItem.Category) ? firstItem.Category : "Thông tin nổi bật";
-                }
                 <i class="bi bi-list-ul me-2"></i> @title
             </div>
 
-            @* 2. DANH SÁCH *@
+            @* 2. DANH SÁCH BÀI VIẾT (Tự động lặp 100% không trượt phát nào) *@
             <div>
-                @foreach (var item in Model)
+                @foreach (var article in Model)
                 {
-                    // --- XỬ LÝ LOGIC LINK ---
-                    string linkUrl = null;
-
-                    // Ưu tiên 1: Link ngoài (cột LinkUrl trong DB)
-                    if (!string.IsNullOrEmpty(item.LinkUrl))
-                    {
-                        linkUrl = item.LinkUrl;
-                    }
-                    // Ưu tiên 2: Link bài viết nội bộ (cột ContentPageId trong DB)
-                    else if (item.ContentPageId.HasValue && item.ContentPage != null)
-                    {
-                        // Tạo link chuẩn: /bai-viet/ID/Slug
-                        linkUrl = $"/bai-viet/{item.ContentPage.Id}/{item.ContentPage.Slug}";
-                    }
-
-                    // --- HIỂN THỊ ---
-
-                    if (linkUrl != null)
-                    {
-                        // TRƯỜNG HỢP 1: CÓ LINK -> Dùng thẻ <a> (Bấm được)
-                        <a href="@linkUrl" class="sidebar-item">
-                            <i class="bi bi-caret-right-fill"></i>
-                            @item.Title
-                        </a>
-                    }
-                    else
-                    {
-                        // TRƯỜNG HỢP 2: KHÔNG CÓ LINK -> Dùng thẻ <div> (Chỉ đọc, KHÔNG bấm được)
-                        <div class="sidebar-content-block">
-                            @if (!string.IsNullOrEmpty(item.Title) && item.Title != "Banner")
-                            {
-                                <div class="fw-bold text-dark mb-1">@item.Title</div>
-                            }
-
-                            @* Hiển thị nội dung HTML (Hotline, Ảnh...) *@
-                            @if (!string.IsNullOrEmpty(item.Content))
-                            {
-                                <div>@Html.Raw(item.Content)</div>
-                            }
-                        </div>
-                    }
+                    // Tự động tạo link nội bộ.
+                    // 🔥 QUAN TRỌNG: Sửa chữ "/PageDetail" thành tên file Razor Page hiển thị bài viết thực tế của bạn
+                    <a asp-page="/PageDetail"
+                       asp-route-id="@article.Id"
+                       class="sidebar-item">
+                        <i class="bi bi-caret-right-fill"></i>
+                        @article.Title
+                    </a>
                 }
             </div>
+
+            @* 3. HIỂN THỊ NỘI DUNG TĨNH (Nếu Admin có cấu hình chèn HTML, Banner...) *@
+            @if (config != null && !string.IsNullOrEmpty(config.Content))
+            {
+                <div class="sidebar-content-block">
+                    @Html.Raw(config.Content)
+                </div>
+            }
+
         </div>
     </div>
 }
