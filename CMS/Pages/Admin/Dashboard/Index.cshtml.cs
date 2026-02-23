@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using CMS.Data;
+// Gọi namespace của thư mục Models và Data trong dự án CMS của bạn
+using CMS.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-// Gọi namespace của thư mục Models và Data trong dự án CMS của bạn
-using CMS.Models;
-using CMS.Data;
 
 namespace CMS.Pages.Admin.Dashboard
 {
@@ -21,42 +21,79 @@ namespace CMS.Pages.Admin.Dashboard
 
         public List<NavigationMenu> RecentMenus { get; set; } = new List<NavigationMenu>();
 
+        public async Task<IActionResult> OnPostFixDataAsync()
+        {
+            // 1. Lệnh vá ContentPageId: Nối Menu với Bài viết dựa trên tên Category
+            // Dùng ILIKE để "giới thiệu" khớp với "Giới Thiệu"
+            var fixMenuSql = @"
+        UPDATE ""NavigationMenus"" nm
+        SET ""ContentPageId"" = cp.""Id""
+        FROM ""ContentPages"" cp
+        WHERE TRIM(nm.""Name"") ILIKE TRIM(cp.""Category"")
+          AND (nm.""ContentPageId"" IS NULL OR nm.""ContentPageId"" = 0)";
+
+            // 2. Lệnh vá MenuId cho Sidebar: Nối Sidebar với Menu dựa trên tên
+            var fixSidebarSql = @"
+        UPDATE ""SidebarItems"" si
+        SET ""MenuId"" = nm.""Id""
+        FROM ""NavigationMenus"" nm
+        WHERE si.""Title"" ILIKE '%' || nm.""Name"" || '%'
+          AND si.""MenuId"" IS NULL";
+
+            // Thực thi trực tiếp xuống PostgreSQL
+            await _context.Database.ExecuteSqlRawAsync(fixMenuSql);
+            await _context.Database.ExecuteSqlRawAsync(fixSidebarSql);
+
+            TempData["Message"] = "Hệ thống đã tự động kết nối các dữ liệu bị NULL thành công!";
+            return RedirectToPage();
+        }
+
         public async Task OnGetAsync()
         {
+            var syncSql = @"
+        UPDATE ""NavigationMenus"" nm
+        SET ""ContentPageId"" = cp.""Id""
+        FROM ""ContentPages"" cp
+        WHERE TRIM(nm.""Name"") ILIKE TRIM(cp.""Category"")
+          AND (nm.""ContentPageId"" IS NULL OR nm.""ContentPageId"" = 0);";
+
+            await _context.Database.ExecuteSqlRawAsync(syncSql);
             if (_context.NavigationMenus != null)
             {
-                // 1. CHỈ LẤY MENU GỐC (Tránh việc thẻ Card đẻ ra vô tội vạ khi tạo menu con)
+                // 1. CHỈ LẤY MENU GỐC (Cha)
                 var rootMenus = await _context.NavigationMenus
-                    .Where(m => m.ParentId == null) // Điều kiện then chốt: Bỏ qua các menu con
+                    .Where(m => m.ParentId == null || m.ParentId == 0) // Tối ưu: Bắt cả null và 0
                     .OrderByDescending(m => m.Id)
-                    .Take(6) // Nên để 6 (2 hàng) cho đẹp giao diện HTML của bạn
+                    .Take(6)
                     .ToListAsync();
 
                 foreach (var menu in rootMenus)
                 {
-                    // 2. TÌM TẤT CẢ CÁC MENU CON THUỘC VỀ MENU NÀY
-                    var childMenuNames = await _context.NavigationMenus
+                    // 1. LẤY TẤT CẢ MENU CON (Lấy cả ID và Name để quét)
+                    var childMenus = await _context.NavigationMenus
                         .Where(c => c.ParentId == menu.Id)
-                        .Select(c => c.Name)
                         .ToListAsync();
 
-                    // Gộp tên Menu cha và tên các Menu con vào chung 1 danh sách
-                    var allCategories = new List<string> { menu.Name };
-                    allCategories.AddRange(childMenuNames);
+                    // 2. GOM TÊN (ĐỂ ĐẾM BÀI) VÀ GOM ID (ĐỂ ĐẾM SIDEBAR)
+                    // Dùng Trim() để gọt sạch dấu cách thừa 2 đầu đề phòng gõ nhầm
+                    var allMenuNames = new List<string> { menu.Name.Trim() };
+                    allMenuNames.AddRange(childMenus.Select(c => c.Name.Trim()));
 
-                    // ĐẾM BÀI VIẾT (Giữ nguyên logic gộp lúc nãy)
+                    var allMenuIds = new List<int> { menu.Id };
+                    allMenuIds.AddRange(childMenus.Select(c => c.Id));
+
+                    // 3. ĐẾM BÀI VIẾT: Bắt chính xác Category
+                    // Lưu ý: Nếu vẫn ra 0, bạn phải check lại trong DB xem chữ viết Hoa/Thường có khớp nhau 100% không!
                     menu.PostCount = await _context.ContentPages
-                        .CountAsync(p => allCategories.Contains(p.Category));
+                        .CountAsync(p => allMenuNames.Contains(p.Category.Trim()));
 
-                    // SIDEBAR: Gộp thành 1. 
-                    // Nếu Menu Cha có Sidebar rồi -> gán là 1 (Đã cấu hình). Nếu chưa -> 0.
-                    // (Bạn điều chỉnh lại bảng Sidebar cho đúng tên trong DB của bạn nhé)
-                    var hasSharedSidebar = await _context.SidebarItems
-                        .AnyAsync(s => s.MenuId == menu.Id); // Chỉ tìm Sidebar gắn với ID của Menu gốc
+                    // 4. ĐẾM SIDEBAR: Quét cả dòng họ (Cha + Các Con)
+                    // Chỉ cần 1 thằng trong dòng họ có Sidebar là đếm 1
+                    var hasSidebar = await _context.SidebarItems
+                        .AnyAsync(s => s.MenuId != null && allMenuIds.Contains(s.MenuId.Value));
 
-                    menu.SidebarCount = hasSharedSidebar ? 1 : 0;
+                    menu.SidebarCount = hasSidebar ? 1 : 0;
                 }
-
                 RecentMenus = rootMenus;
             }
         }

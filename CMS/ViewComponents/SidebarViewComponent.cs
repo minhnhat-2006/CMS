@@ -24,7 +24,7 @@ namespace CMS.ViewComponents
             var relatedArticles = await _context.ContentPages
                 .AsNoTracking()
                 .Where(x => x.Category == currentCategory && x.IsVisible)
-                .OrderByDescending(x => x.Id)
+                .OrderBy(x => x.Id)
                 .ToListAsync();
 
             // 3. Đẩy cái vỏ vào ViewData, truyền cái ruột ra Model

@@ -56,35 +56,33 @@ namespace CMS.Pages.Admin.Wizard
 
             pageToUpdate.HasSidebar = HasSidebar;
 
+            // 🔥 DỜI ĐOẠN TÌM MENU LÊN ĐÂY!
+            // Truy tìm Menu gốc chứa bài viết này để lấy MenuId
+            var linkedMenu = await _context.NavigationMenus.FirstOrDefaultAsync(m => m.ContentPageId == pageToUpdate.Id);
+            int finalMenuId = linkedMenu != null ? linkedMenu.Id : 0;
+
             if (HasSidebar)
             {
-                // Kiểm tra lại lần nữa trước khi thêm mới
                 bool hasItem = await _context.SidebarItems.AnyAsync(s => s.Category == pageToUpdate.Category);
 
                 if (!hasItem)
                 {
-                    // CHƯA CÓ thì mới tạo (CHỈ TẠO 1 LẦN DUY NHẤT)
                     _context.SidebarItems.Add(new SidebarItem
                     {
-                        Title = pageToUpdate.Category, // Có thể đổi thành "Danh mục liên quan" tùy ý bạn
-
-                        // 🔥 CẬP NHẬT CHÍNH: Để trống hoàn toàn Content theo chuẩn "Cách 2"
+                        Title = pageToUpdate.Category,
                         Content = "",
-
                         IsVisible = true,
                         Category = pageToUpdate.Category,
+                        ContentPageId = null,
 
-                        // Ép thành NULL để biến Sidebar thành tài sản chung của Category
-                        ContentPageId = null
+                        // 🔥 NÚT THẮT QUAN TRỌNG NHẤT LÀ ĐÂY:
+                        MenuId = finalMenuId > 0 ? finalMenuId : null // Gắn chặt ID vào để hết bị liệt đếm!
                     });
                 }
             }
             await _context.SaveChangesAsync();
 
-            // Truy tìm Menu chứa bài viết này để ném ra trang Success
-            var linkedMenu = await _context.NavigationMenus.FirstOrDefaultAsync(m => m.ContentPageId == pageToUpdate.Id);
-            int finalMenuId = linkedMenu != null ? linkedMenu.Id : 0;
-
+            // Chuyển sang trang Success mượt mà
             return RedirectToPage("./WizardSuccess", new { id = finalMenuId });
         }
     }
