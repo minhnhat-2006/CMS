@@ -8,6 +8,6 @@ RUN dotnet publish "CMS/CMS.csproj" -c Release -o /app/publish
 # Stage 2: Run
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
-RUN apt-get update && apt-get install -y libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libgssapi-krb5-2 libkrb5-3 libk5crypto3 && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "CMS.dll"]
