@@ -3,8 +3,27 @@
 @{
     ViewData["Title"] = "Hoàn tất xuất bản";
 
-    // CHỐT CHẶN TRIỆT ĐỂ LỖI NHẬN CON LÀM CHA (Giữ nguyên logic của bạn)
-    int targetParentId = Model.ParentId.HasValue ? Model.ParentId.Value : Model.CreatedMenuId;
+    // ------------------------------------------------------------------
+    // LOGIC NHẬN DIỆN THÔNG MINH: ĐIỀU HƯỚNG BƯỚC TIẾP THEO THEO NGỮ CẢNH
+    // ------------------------------------------------------------------
+    int targetParentId;
+    string btnAddText = "";
+    string btnAddIcon = "";
+
+    if (Model.ParentId.HasValue && Model.ParentId.Value > 0)
+    {
+        // Vừa tạo mục con -> Gợi ý tạo thêm anh em cùng cấp (cùng cha)
+        targetParentId = Model.ParentId.Value;
+        btnAddText = $"Thêm mục khác vào \"{Model.ParentName}\"";
+        btnAddIcon = "bi-file-earmark-plus";
+    }
+    else
+    {
+        // Vừa tạo thư mục gốc -> Gợi ý tạo mục con bên trong nó
+        targetParentId = Model.CreatedMenuId;
+        btnAddText = $"Thêm mục con vào \"{Model.CreatedMenuName}\"";
+        btnAddIcon = "bi-diagram-3";
+    }
 
     // Lấy ID bài viết từ URL để truyền cho nút Sửa Sidebar
     var currentId = RouteData.Values["id"];
@@ -81,7 +100,7 @@
                     <i class="bi bi-check-lg success-icon"></i>
                 </div>
                 <h1 class="fw-bold text-dark mb-2">Xuất bản thành công!</h1>
-                <p class="text-muted fs-5">Hệ thống đã ghi nhận và tạo bài viết mới của bạn.</p>
+                <p class="text-muted fs-5">Hệ thống đã ghi nhận và tạo luồng dữ liệu của bạn.</p>
             </div>
 
             <div class="row g-4 mb-5">
@@ -95,7 +114,7 @@
                         </div>
                         <h5 class="fw-bold text-dark mb-1">@Model.CreatedMenuName</h5>
                         <small class="text-muted">
-                            Thuộc: @(string.IsNullOrEmpty(Model.ParentName) ? "Menu Gốc (Cao nhất)" : Model.ParentName)
+                            Thuộc: @(string.IsNullOrEmpty(Model.ParentName) ? "Menu Gốc (Đứng độc lập)" : Model.ParentName)
                         </small>
                     </div>
                 </div>
@@ -111,7 +130,7 @@
                         <a href="/@Model.Slug" target="_blank" class="text-primary fw-bold text-decoration-none d-block text-truncate mb-1 fs-5">
                             /@Model.Slug
                         </a>
-                        <small class="text-muted"><i class="bi bi-globe me-1"></i>Đã hiển thị (Live)</small>
+                        <small class="text-muted"><i class="bi bi-globe me-1"></i>Đã hiển thị ngoài Website</small>
                     </div>
                 </div>
 
@@ -121,10 +140,10 @@
                             <div class="icon-box bg-info bg-opacity-10 text-info me-3">
                                 <i class="bi bi-bar-chart-line"></i>
                             </div>
-                            <h6 class="mb-0 fw-bold text-secondary text-uppercase" style="font-size: 13px;">Thống kê chuyên mục</h6>
+                            <h6 class="mb-0 fw-bold text-secondary text-uppercase" style="font-size: 13px;">Trạng thái</h6>
                         </div>
-                        <h3 class="fw-bold text-dark mb-0">1 <span class="fs-6 fw-normal text-muted">bài viết</span></h3>
-                        <small class="text-success fw-bold"><i class="bi bi-arrow-up-short"></i> Vừa thêm mới</small>
+                        <h3 class="fw-bold text-dark mb-0">Hoạt động</h3>
+                        <small class="text-success fw-bold"><i class="bi bi-arrow-up-short"></i> Dữ liệu đã đồng bộ</small>
                     </div>
                 </div>
             </div>
@@ -133,15 +152,15 @@
                 <div class="card-body p-4 d-flex flex-wrap justify-content-center gap-3">
 
                     <a asp-page="./Step1_Menu" asp-route-parentId="@targetParentId" class="btn btn-primary btn-lg rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center">
-                        <i class="bi bi-plus-circle me-2"></i> Thêm bài viết / mục con
+                        <i class="bi @btnAddIcon me-2"></i> @btnAddText
                     </a>
 
                     <a asp-page="./Step3_Sidebar" asp-route-id="@currentId" class="btn btn-outline-primary btn-lg rounded-pill px-4 fw-bold d-flex align-items-center">
                         <i class="bi bi-layout-sidebar-reverse me-2"></i> Chỉnh sửa Sidebar
                     </a>
 
-                    <a asp-page="/Admin/Index" class="btn btn-light btn-lg rounded-pill px-4 border text-secondary fw-bold d-flex align-items-center hover-bg-light">
-                        <i class="bi bi-house-door me-2"></i> Về Dashboard
+                    <a asp-page="/Admin/DuAn/Index" class="btn btn-light btn-lg rounded-pill px-4 border text-secondary fw-bold d-flex align-items-center hover-bg-light">
+                        <i class="bi bi-house-door me-2"></i> Về Quản lý Dự án
                     </a>
 
                 </div>

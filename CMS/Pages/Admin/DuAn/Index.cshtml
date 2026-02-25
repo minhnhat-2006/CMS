@@ -1,0 +1,126 @@
+﻿@page
+@model CMS.Pages.Admin.DuAn.IndexModel
+@{
+    ViewData["Title"] = "Quản lý Dự án";
+}
+
+<style>
+    /* Hiệu ứng hover cho thẻ Dự án */
+    .card-hover {
+        transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+    }
+
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+        }
+
+    .hover-primary:hover {
+        color: #0d6efd !important;
+    }
+
+    /* ĐÃ SỬA: Dùng class icon-container để icon màu xanh hay đỏ đều có hiệu ứng zoom */
+    .card-hover:hover .icon-container i {
+        transform: scale(1.1);
+        transition: transform 0.3s ease;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h3 class="fw-bold text-dark mb-0">
+                <i class="bi bi-folder-fill text-warning me-2"></i>Quản lý Dự án
+            </h3>
+            <p class="text-muted small mb-0">Danh sách các chuyên mục và luồng dữ liệu được khởi tạo tự động.</p>
+        </div>
+
+        <a asp-page="/Admin/Wizard/Step1_Menu" class="btn btn-primary fw-bold shadow-sm rounded-pill px-4">
+            <i class="bi bi-plus-lg me-1"></i> Tạo Dự án mới
+        </a>
+    </div>
+
+    <div class="row g-4">
+        @if (Model.RecentMenus != null && Model.RecentMenus.Any())
+        {
+            @foreach (var item in Model.RecentMenus)
+            {
+                // --- LOGIC MỚI: Kiểm tra xem đây có phải luồng "Nhiều bài viết" (Danh mục) không ---
+                // Dựa vào việc có ChuyenMucId hay không. Nếu Model của bác dùng thuộc tính khác thì sửa ở đây nhé.
+                bool isMultiplePosts = item.ChuyenMucId != null;
+
+                // Đổi màu: Nếu là nhiều bài viết -> Màu đỏ (danger). Ngược lại -> Màu xanh (primary)
+                string bgClass = isMultiplePosts ? "bg-danger" : "bg-primary";
+                string textClass = isMultiplePosts ? "text-danger" : "text-primary";
+
+                <div class="col-md-6 col-lg-4 col-xl-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 card-hover bg-white">
+                        <div class="card-body p-4 d-flex flex-column">
+
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="icon-container @bgClass bg-opacity-10 @textClass rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="bi @(item.ParentId == null ? "bi-folder-fill" : "bi-file-text-fill") fs-4"></i>
+                                </div>
+
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-1 small fw-bold">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Hoàn tất
+                                </span>
+                            </div>
+
+                            <h5 class="fw-bold text-dark mb-1 text-truncate" title="@item.Name">@item.Name</h5>
+                            <a href="/@item.Url" target="_blank" class="text-primary small mb-3 text-decoration-none d-block text-truncate hover-primary">
+                                <i class="bi bi-link-45deg"></i> /@item.Url
+                            </a>
+
+                            <div class="row g-2 mb-4 bg-light border rounded-3 p-3 text-center">
+                                <div class="col-6 border-end">
+                                    <span class="d-block text-muted small fw-medium mb-1">Bài viết</span>
+                                    <strong class="text-dark fs-4">@item.PostCount</strong>
+                                </div>
+                                <div class="col-6">
+                                    <span class="d-block text-muted small fw-medium mb-1">Sidebar</span>
+                                    <strong class="text-dark fs-4">@item.SidebarCount</strong>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto"></div>
+
+                            <div class="d-flex flex-column gap-2 pt-3 border-top">
+                                <a href="/Admin/Customize" class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex justify-content-center align-items-center py-2 w-100">
+                                    <i class="bi bi-sliders me-2"></i> Tùy chỉnh Dự án
+                                </a>
+
+                                <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                                    <a asp-page="/Admin/Wizard/Step1_Menu" asp-route-parentId="@item.Id" class="text-secondary text-decoration-none small hover-primary fw-medium">
+                                        <i class="bi bi-diagram-3 me-1"></i> Thêm mục con
+                                    </a>
+                                    <form method="post" asp-page-handler="DeleteFlow" asp-route-id="@item.Id" onsubmit="return confirm('Bạn có chắc chắn muốn xóa toàn bộ luồng dữ liệu này?');">
+                                        <button type="submit" class="btn btn-link text-danger text-decoration-none p-0 small fw-medium">
+                                            <i class="bi bi-trash me-1"></i> Xóa luồng
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 mt-5 text-center">
+                <div class="card border-0 shadow-sm rounded-4 bg-white p-5">
+                    <div class="py-4">
+                        <i class="bi bi-inbox text-muted opacity-25" style="font-size: 5rem;"></i>
+                        <h4 class="fw-bold text-secondary mt-3">Chưa có dự án nào được khởi tạo</h4>
+                        <p class="text-muted mb-4">Mọi dự án bạn tạo từ quy trình 3 bước sẽ xuất hiện tại đây.</p>
+                        <a asp-page="/Admin/Wizard/Step1_Menu" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">
+                            <i class="bi bi-rocket-takeoff-fill me-2"></i> Bắt đầu ngay
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

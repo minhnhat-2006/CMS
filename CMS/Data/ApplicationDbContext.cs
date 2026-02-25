@@ -1,5 +1,6 @@
 ﻿using CMS.Models;
 using Microsoft.EntityFrameworkCore;
+using YourProjectName.Models;
 
 namespace CMS.Data
 {
@@ -14,7 +15,7 @@ namespace CMS.Data
         public DbSet<ContentPage> ContentPages { get; set; }
         public DbSet<SidebarItem> SidebarItems { get; set; }
         public DbSet<TaiKhoan> TaiKhoan { get; set; }
-
+        public DbSet<ChuyenMuc> ChuyenMucs { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

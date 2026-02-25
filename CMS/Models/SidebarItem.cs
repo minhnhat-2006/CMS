@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using YourProjectName.Models;
 
 namespace CMS.Models
 {
@@ -31,6 +32,11 @@ namespace CMS.Models
 
         [ForeignKey("MenuId")]
         public virtual NavigationMenu? Menu { get; set; } // Dây liên kết sang bảng Menu
-      
+                                                          // Khóa ngoại trỏ về ChuyenMuc
+        public int? ChuyenMucId { get; set; }
+
+        [ForeignKey("ChuyenMucId")]
+        public virtual ChuyenMuc? ChuyenMuc { get; set; }
+
     }
 }

@@ -2,6 +2,7 @@
 using CMS.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace CMS.Pages.Admin.Wizard
@@ -24,32 +25,14 @@ namespace CMS.Pages.Admin.Wizard
 
         public string MenuName { get; set; } = "";
 
-        // ==================================================================
-        // 🔥 HÀM MỚI: Dò ngược cây phả hệ tìm Menu Gốc (Chống lỗi Menu nhiều cấp)
-        // ==================================================================
-        private async Task<string> GetRootCategoryNameAsync(int menuId)
-        {
-            var menu = await _context.NavigationMenus.FindAsync(menuId);
-            if (menu == null) return string.Empty;
-
-            // Dùng vòng lặp while để leo ngược lên tận đỉnh, dù là cháu hay chắt
-            while (menu.ParentId.HasValue && menu.ParentId.Value > 0)
-            {
-                var parent = await _context.NavigationMenus.FindAsync(menu.ParentId.Value);
-                if (parent == null) break;
-                menu = parent; // Gán lại để tiếp tục leo lên
-            }
-
-            // Thoát vòng lặp, lúc này menu chính là Menu Gốc ngoài cùng
-            return menu.Name;
-        }
-
         public async Task<IActionResult> OnGetAsync(int menuId)
         {
             if (menuId <= 0) return RedirectToPage("./Step1_Menu");
 
-            // 1. Tìm Menu con vừa tạo ở Bước 1
-            var currentMenu = await _context.NavigationMenus.FindAsync(menuId);
+            var currentMenu = await _context.NavigationMenus
+                .AsNoTracking() // Dùng AsNoTracking ở Get vì chỉ để hiển thị
+                .FirstOrDefaultAsync(m => m.Id == menuId);
+
             if (currentMenu == null) return RedirectToPage("./Step1_Menu");
 
             TargetMenuId = currentMenu.Id;
@@ -59,17 +42,15 @@ namespace CMS.Pages.Admin.Wizard
             ContentPage.IsVisible = true;
             ContentPage.HasSidebar = true;
 
-            // ------------------------------------------------------------------
-            // 🔥 LOGIC TÌM MENU GỐC ĐỂ KẾ THỪA CATEGORY NGAY TRÊN GIAO DIỆN
-            // ------------------------------------------------------------------
-            ContentPage.Category = await GetRootCategoryNameAsync(currentMenu.Id);
+            // ĐÃ SỬA: Lấy trực tiếp tên của Menu hiện tại làm Category 
+            // (Không dùng hàm GetRootCategoryNameAsync nữa để tránh nhận diện nhầm thành menu Cha)
+            ContentPage.Category = currentMenu.Name;
 
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // Xóa validate mảng liên kết để không báo lỗi ảo
             ModelState.Remove("ContentPage.SidebarItems");
 
             if (!ModelState.IsValid)
@@ -77,27 +58,45 @@ namespace CMS.Pages.Admin.Wizard
                 return Page();
             }
 
+            // Phải dùng tracking ở đây để EF theo dõi sự thay đổi
             var currentMenu = await _context.NavigationMenus.FindAsync(TargetMenuId);
             if (currentMenu == null) return Page();
 
-            // ------------------------------------------------------------------
-            // 🔥 CHỐT CHẶN CUỐI CÙNG: ÉP BUỘC CATEGORY TỪ SERVER 
-            // ------------------------------------------------------------------
-            // Bất chấp HTML gửi lên cái gì, gọi hàm dò tìm Menu Gốc và đè lại dữ liệu
-            ContentPage.Category = await GetRootCategoryNameAsync(TargetMenuId);
+            // ĐÃ SỬA: Chốt chặn cuối cùng: Ép buộc Category là tên của Menu hiện tại từ server
+            ContentPage.Category = currentMenu.Name;
 
-            // LƯU BÀI VIẾT VÀO DATABASE (Lúc này Category đã bị ép chuẩn 100%)
-            _context.ContentPages.Add(ContentPage);
-            await _context.SaveChangesAsync();
-            // Lưu xong, ContentPage.Id sẽ có số mới
+            // ==================================================================
+            // 🔥 ĐIỂM CHỐT HẠ: Truyền ChuyenMucId từ Menu sang thẳng Bài viết
+            // ==================================================================
+            ContentPage.ChuyenMucId = currentMenu.ChuyenMucId;
 
-            // NỐI TƠ HỒNG: Gắn Bài Viết vào Menu
-            currentMenu.ContentPageId = ContentPage.Id;
-            _context.NavigationMenus.Update(currentMenu);
-            await _context.SaveChangesAsync();
+            // ==================================================================
+            // 🔥 TRANSACTION: Đảm bảo "Sống cùng sống, chết cùng chết"
+            // ==================================================================
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // 1. Lưu bài viết (Lúc này bài viết đã có sẵn ChuyenMucId không bao giờ null)
+                _context.ContentPages.Add(ContentPage);
+                await _context.SaveChangesAsync(); // Sau dòng này, ContentPage.Id có giá trị thực
 
-            // ĐI TIẾP BƯỚC 3 (Mang theo ID của Bài viết)
-            return RedirectToPage("./Step3_Sidebar", new { id = ContentPage.Id });
+                // 2. NỐI TƠ HỒNG: Gắn Bài Viết vào Menu
+                currentMenu.ContentPageId = ContentPage.Id;
+                // Không cần _context.NavigationMenus.Update() vì currentMenu đang được tracking
+                await _context.SaveChangesAsync();
+
+                // 3. Chốt giao dịch thành công
+                await transaction.CommitAsync();
+
+                return RedirectToPage("./Step3_Sidebar", new { id = ContentPage.Id });
+            }
+            catch
+            {
+                // Nếu có bất kỳ lỗi gì xảy ra, Rollback lại toàn bộ, không tạo ra dữ liệu rác
+                await transaction.RollbackAsync();
+                ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại.");
+                return Page();
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using YourProjectName.Models;
 
 namespace CMS.Models
 {
@@ -36,6 +37,11 @@ namespace CMS.Models
 
         [ForeignKey("ContentPageId")]
         public virtual ContentPage? LinkedPage { get; set; } // Để lấy Slug mới nhất
-       
+                                                             // Khóa ngoại trỏ về ChuyenMuc (Dành cho Option 2 - Giao diện Bách Khoa)
+        public int? ChuyenMucId { get; set; }
+
+        [ForeignKey("ChuyenMucId")]
+        public virtual ChuyenMuc? ChuyenMuc { get; set; }
+
     }
 }

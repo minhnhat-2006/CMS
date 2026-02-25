@@ -17,7 +17,7 @@ namespace CMS.Pages.Admin.Wizard
         public string Slug { get; set; } = "#";
         public int TotalPosts { get; set; } = 0;
 
-        // 👉 ĐÂY LÀ BIẾN CÒN THIẾU ĐỂ TRANG GIAO DIỆN KHÔNG BỊ LỖI
+        // BIẾN ĐỂ TRANG GIAO DIỆN KHÔNG BỊ LỖI
         public int? ParentId { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -25,7 +25,12 @@ namespace CMS.Pages.Admin.Wizard
             if (id <= 0) return RedirectToPage("Step1_Menu");
             CreatedMenuId = id;
 
-            var menu = await _context.NavigationMenus.Include(m => m.LinkedPage).FirstOrDefaultAsync(m => m.Id == id);
+            // ĐÃ SỬA: Include thêm ChuyenMuc để lấy Slug của dự án dạng Danh Mục
+            var menu = await _context.NavigationMenus
+                .Include(m => m.LinkedPage)
+                .Include(m => m.ChuyenMuc)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
             if (menu != null)
             {
                 CreatedMenuName = menu.Name ?? "Chưa đặt tên";
@@ -34,22 +39,29 @@ namespace CMS.Pages.Admin.Wizard
                 {
                     var parent = await _context.NavigationMenus.FindAsync(menu.ParentId);
                     ParentName = parent?.Name;
-
-                    // Lấy ID cha gán vào biến
                     ParentId = menu.ParentId;
-
                     TotalPosts = await _context.NavigationMenus.CountAsync(m => m.ParentId == menu.ParentId);
                 }
                 else
                 {
                     ParentName = null;
-
-                    // Menu gốc thì không có cha
                     ParentId = null;
-
                     TotalPosts = await _context.NavigationMenus.CountAsync(m => m.ParentId == null);
                 }
-                Slug = menu.LinkedPage?.Slug ?? "#";
+
+                // ĐÃ SỬA: Logic lấy URL thông minh bao trọn các trường hợp
+                if (menu.LinkedPage != null)
+                {
+                    Slug = $"bai-viet/{menu.LinkedPage.Id}/{menu.LinkedPage.Slug}";
+                }
+                else if (menu.ChuyenMuc != null)
+                {
+                    Slug = menu.ChuyenMuc.Slug;
+                }
+                else
+                {
+                    Slug = menu.Url ?? "#";
+                }
             }
             return Page();
         }

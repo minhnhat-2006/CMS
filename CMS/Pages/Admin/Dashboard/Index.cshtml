@@ -2,14 +2,11 @@
 @model CMS.Pages.Admin.Dashboard.IndexModel
 @{
     ViewData["Title"] = "Admin Dashboard";
+    // KHÔNG CẦN GỌI LAYOUT Ở ĐÂY NỮA, _ViewStart ĐÃ LÀM HỘ RỒI
 }
 
 <style>
-    body {
-        background-color: #f4f6f9;
-    }
-
-    /* CSS CHO THẺ "THIẾT LẬP NHANH" */
+    /* Chỉ giữ lại CSS hiệu ứng bay bay của mấy cái Thẻ bài */
     .card-quick-setup {
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         cursor: pointer;
@@ -31,7 +28,6 @@
         background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
     }
 
-    /* Hiệu ứng hover cho các thẻ tĩnh và thẻ menu */
     .card-hover {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
@@ -42,175 +38,95 @@
         }
 </style>
 
-<div class="container-fluid py-4 px-4">
-
-    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
-        <div>
-            <h2 class="fw-bold text-dark mb-1">Hệ thống Quản trị</h2>
-            <p class="text-muted mb-0 small">Chào mừng bạn quay trở lại với bảng điều khiển</p>
-        </div>
-        <span class="badge bg-white text-secondary border shadow-sm px-3 py-2 fs-6 rounded-pill">
-            <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
-        </span>
+<div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">Hệ thống Quản trị</h2>
+        <p class="text-muted mb-0 small">Chào mừng bạn quay trở lại với bảng điều khiển</p>
     </div>
+    <span class="badge bg-white text-secondary border shadow-sm px-3 py-2 fs-6 rounded-pill">
+        <i class="bi bi-speedometer2 me-2"></i>Trang chủ Dashboard
+    </span>
+</div>
 
-    <div class="card shadow-sm border-0 rounded-4 mb-5 bg-transparent shadow-none">
-        <div class="card-header bg-transparent border-0 pt-0 pb-3 px-1">
-            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
-                <i class="bi bi-grid-1x2-fill text-primary me-2 fs-4"></i> Danh sách thông tin
-            </h5>
-        </div>
+<div class="card shadow-sm border-0 rounded-4 mb-4 bg-transparent shadow-none">
+    <div class="card-header bg-transparent border-0 pt-0 pb-3 px-1">
+        <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
+            <i class="bi bi-grid-1x2-fill text-primary me-2 fs-4"></i> Danh sách thông tin
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="row g-4">
 
-        <div class="card-body p-0">
-            <div class="row g-4">
-                <div class="col-md-6 col-lg-3">
-                    <a asp-page="/Admin/Wizard/Step1_Menu" class="text-decoration-none">
-                        <div class="card card-quick-setup h-100 border-0 shadow rounded-4 bg-gradient-fast text-white">
-                            <div style="position: absolute; top: -10px; right: -10px; opacity: 0.2;">
-                                <i class="bi bi-lightning-charge-fill" style="font-size: 8rem;"></i>
-                            </div>
-
-                            <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
-                                <div class="mb-3">
-                                    <div class="bg-white bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                        <i class="bi bi-rocket-takeoff-fill fs-2"></i>
-                                    </div>
+            <div class="col-md-6 col-lg-3">
+                <a asp-page="/Admin/Wizard/Step1_Menu" asp-route-type="1" class="text-decoration-none">
+                    <div class="card card-quick-setup h-100 border-0 shadow rounded-4 bg-gradient-fast text-white">
+                        <div style="position: absolute; top: -10px; right: -10px; opacity: 0.2;">
+                            <i class="bi bi-lightning-charge-fill" style="font-size: 8rem;"></i>
+                        </div>
+                        <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                            <div class="mb-3">
+                                <div class="bg-white bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-rocket-takeoff-fill fs-2"></i>
                                 </div>
-                                <h5 class="fw-bold card-title">🚀 Thiết lập nhanh</h5>
-                                <p class="card-text small opacity-75 mb-3">Tạo Menu & Bài viết tự động theo quy trình xuyên suốt.</p>
-                                <span class="btn btn-sm btn-light text-primary fw-bold rounded-pill w-100 mt-auto">Bắt đầu ngay</span>
                             </div>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-md-6 col-lg-3">
-                    <div class="card card-hover text-dark bg-warning bg-opacity-75 mb-3 shadow-sm h-100 border-0 rounded-4">
-                        <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
-                            <div class="mb-3 text-dark opacity-75"><i class="bi bi-diagram-3-fill" style="font-size: 3rem;"></i></div>
-                            <h5 class="card-title fw-bold">🔗 Menu Chính</h5>
-                            <p class="card-text small mb-4">Quản lý thanh điều hướng và cấu trúc phân cấp.</p>
-                            <a asp-page="/Admin/NavigationMenus/Index" class="btn btn-dark btn-sm rounded-pill fw-bold w-100 mt-auto shadow-sm">Truy cập ngay</a>
+                            <h5 class="fw-bold card-title">🚀 Tạo Trang Đơn</h5>
+                            <p class="card-text small opacity-75 mb-3">Tạo 1 Menu & 1 Bài viết (Giới thiệu, Liên hệ...)</p>
+                            <span class="btn btn-sm btn-light text-primary fw-bold rounded-pill w-100 mt-auto">Bắt đầu ngay</span>
                         </div>
                     </div>
-                </div>
+                </a>
+            </div>
 
-                <div class="col-md-6 col-lg-3">
-                    <div class="card card-hover text-white bg-primary mb-3 shadow-sm h-100 border-0 rounded-4">
-                        <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
-                            <div class="mb-3 opacity-75"><i class="bi bi-file-earmark-richtext-fill" style="font-size: 3rem;"></i></div>
-                            <h5 class="card-title fw-bold">📝 Bài Viết</h5>
-                            <p class="card-text small mb-4">Soạn thảo, chỉnh sửa nội dung các trang con.</p>
-                            <a asp-page="/Admin/Trang/Index" class="btn btn-light btn-sm rounded-pill w-100 mt-auto text-primary fw-bold shadow-sm">Truy cập ngay</a>
-                        </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card card-hover text-dark bg-warning bg-opacity-75 mb-3 shadow-sm h-100 border-0 rounded-4">
+                    <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                        <div class="mb-3 text-dark opacity-75"><i class="bi bi-diagram-3-fill" style="font-size: 3rem;"></i></div>
+                        <h5 class="card-title fw-bold">🔗 Menu Chính</h5>
+                        <p class="card-text small mb-4">Quản lý thanh điều hướng.</p>
+                        <a asp-page="/Admin/NavigationMenus/Index" class="btn btn-dark btn-sm rounded-pill fw-bold w-100 mt-auto shadow-sm">Truy cập ngay</a>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-md-6 col-lg-3">
-                    <div class="card card-hover text-white bg-success mb-3 shadow-sm h-100 border-0 rounded-4">
-                        <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
-                            <div class="mb-3 opacity-75"><i class="bi bi-layout-sidebar-inset-reverse" style="font-size: 3rem;"></i></div>
-                            <h5 class="card-title fw-bold">🛠️ Sidebar</h5>
-                            <p class="card-text small mb-4">Cấu hình banner quảng cáo và liên kết hiển thị.</p>
-                            <a asp-page="/Admin/Sidebar/Index" class="btn btn-light btn-sm rounded-pill w-100 mt-auto text-success fw-bold shadow-sm">Truy cập ngay</a>
-                        </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card card-hover text-white bg-primary mb-3 shadow-sm h-100 border-0 rounded-4">
+                    <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                        <div class="mb-3 opacity-75"><i class="bi bi-file-earmark-richtext-fill" style="font-size: 3rem;"></i></div>
+                        <h5 class="card-title fw-bold">📝 Bài Viết</h5>
+                        <p class="card-text small mb-4">Soạn thảo, chỉnh sửa nội dung.</p>
+                        <a asp-page="/Admin/Trang/Index" class="btn btn-light btn-sm rounded-pill w-100 mt-auto text-primary fw-bold shadow-sm">Truy cập ngay</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="card card-hover text-white bg-success mb-3 shadow-sm h-100 border-0 rounded-4">
+                    <div class="card-body p-4 text-center d-flex flex-column justify-content-center">
+                        <div class="mb-3 opacity-75"><i class="bi bi-layout-sidebar-inset-reverse" style="font-size: 3rem;"></i></div>
+                        <h5 class="card-title fw-bold">🛠️ Sidebar</h5>
+                        <p class="card-text small mb-4">Cấu hình banner và liên kết.</p>
+                        <a asp-page="/Admin/Sidebar/Index" class="btn btn-light btn-sm rounded-pill w-100 mt-auto text-success fw-bold shadow-sm">Truy cập ngay</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="card shadow-sm border-0 rounded-4 mb-4 bg-transparent shadow-none">
-        <div class="card-header bg-transparent border-0 pt-0 pb-3 px-1 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
-                <i class="bi bi-collection-fill text-success me-2 fs-4"></i> Danh sách Menu vừa tạo
-            </h5>
-            <a asp-page="/Admin/NavigationMenus/Index" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
-                Xem tất cả <i class="bi bi-arrow-right ms-1"></i>
-            </a>
-        </div>
-
-        <div class="card-body p-0">
-            <div class="row g-4">
-
-                @* KIỂM TRA NẾU CÓ DỮ LIỆU THÌ LẶP RA CÁC THẺ *@
-                @if (Model.RecentMenus != null && Model.RecentMenus.Any())
-                {
-                    foreach (var item in Model.RecentMenus)
-                    {
-                        <div class="col-md-6 col-lg-4 col-xl-4">
-                            <div class="card border-0 shadow-sm rounded-4 h-100 card-hover bg-white">
-                                <div class="card-body p-4 d-flex flex-column">
-
-                                    <div class="d-flex justify-content-between align-items-start mb-3">
-                                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                            <i class="bi @(item.ParentId == null ? "bi-folder-fill" : "bi-file-text-fill") fs-4"></i>
-                                        </div>
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-1">
-                                            <i class="bi bi-check-circle-fill me-1"></i> Published
-                                        </span>
-                                    </div>
-
-                                    <h5 class="fw-bold text-dark mb-1 text-truncate" title="@item.Name">@item.Name</h5>
-                                    <a href="/@item.Url" target="_blank" class="text-primary small mb-3 text-decoration-none d-block text-truncate">
-                                        <i class="bi bi-link-45deg"></i> /@item.Url
-                                    </a>
-
-                                    <div class="row g-2 mb-4 bg-light border rounded-3 p-3 text-center">
-                                        <div class="col-6 border-end">
-                                            <span class="d-block text-muted small fw-medium mb-1">Bài viết</span>
-                                            <strong class="text-dark fs-4">@item.PostCount</strong>
-                                        </div>
-                                        <div class="col-6">
-                                            <span class="d-block text-muted small fw-medium mb-1">Sidebar</span>
-                                            <strong class="text-dark fs-4">@item.SidebarCount</strong>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-auto"></div>
-
-                                    <div class="d-flex flex-column gap-3 pt-3 border-top">
-
-                                        <a asp-page="/Admin/Wizard/Step1_Menu" asp-route-parentId="@item.Id" class="btn btn-primary rounded-pill fw-bold shadow-sm d-flex justify-content-center align-items-center py-2 w-100">
-                                            <i class="bi bi-diagram-3-fill me-2 fs-5"></i> Tạo thêm mục mới
-                                            <a href="/Admin/Customize" class="btn btn-primary">
-                                                <i class="fas fa-sliders-h"></i> Tùy chỉnh Thẻ
-                                            </a>
-                                        </a>
-
-                                        <div class="d-flex justify-content-between align-items-center px-1">
-                                            <a href="/@item.Url" target="_blank" class="text-secondary text-decoration-none small hover-primary" title="Xem kết quả">
-                                                <i class="bi bi-eye me-1"></i> Xem trang gốc
-                                            </a>
-                                            <button type="button" class="btn btn-link text-danger text-decoration-none p-0 small" title="Xóa toàn bộ">
-                                                <i class="bi bi-trash me-1"></i> Xóa luồng này
-                                            </button>
-                                        </div>
-
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                    }
-                }
-                @* NẾU CHƯA CÓ DỮ LIỆU THÌ HIỂN THỊ THÔNG BÁO *@
-                else
-                {
-                    <div class="col-12">
-                        <div class="card border-0 shadow-sm rounded-4 bg-white p-5 text-center">
-                            <i class="bi bi-inbox text-muted mb-3" style="font-size: 3rem;"></i>
-                            <h5 class="fw-bold text-dark">Chưa có Menu nào được tạo gần đây</h5>
-                            <p class="text-muted mb-4">Hãy sử dụng tính năng "Thiết lập nhanh" để tạo quy trình xuyên suốt.</p>
-                            <a asp-page="/Admin/Wizard/Step1_Menu" class="btn btn-primary rounded-pill px-4 fw-bold">
-                                <i class="bi bi-rocket-takeoff me-2"></i> Bắt đầu thiết lập
-                            </a>
-                        </div>
-                    </div>
-                }
-
+<div class="card border-0 shadow-sm rounded-4 mt-2 card-hover">
+    <div class="card-body p-4 border-start border-4 border-danger rounded-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5 class="fw-bold text-dark mb-2">
+                    <i class="bi bi-ui-checks-grid text-danger me-2"></i> Thiết lập nhanh Chuyên mục (Nhiều bài)
+                </h5>
+                <p class="text-muted mb-0">Tự động tạo Menu và Thùng chứa để bạn đăng nhiều bài viết vào cùng một mục (Tin tức, Hoạt động...).</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a asp-page="/Admin/Wizard/Step1_Menu" asp-route-type="2" class="btn btn-outline-danger fw-bold rounded-pill px-4">
+                    Bắt đầu thiết lập <i class="bi bi-arrow-right ms-1"></i>
+                </a>
             </div>
         </div>
     </div>
-
 </div>

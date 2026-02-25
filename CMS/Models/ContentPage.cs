@@ -1,5 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using YourProjectName.Models;
 
 namespace CMS.Models
 {
@@ -39,5 +41,16 @@ namespace CMS.Models
         // Navigation property
         public virtual ICollection<SidebarItem>? SidebarItems { get; set; }
         public bool HasSidebar { get; set; } = true;
+        // Khóa ngoại trỏ về ChuyenMuc (Cho phép null với trang tĩnh 1-1)
+        public int? ChuyenMucId { get; set; }
+
+        [ForeignKey("ChuyenMucId")]
+        public virtual ChuyenMuc? ChuyenMuc { get; set; }
+        [Display(Name = "Ảnh đại diện")]
+        [StringLength(500)]
+        public string? Thumbnail { get; set; }
+
+        [Display(Name = "Lượt xem")]
+        public int ViewCount { get; set; } = 0;
     }
 }

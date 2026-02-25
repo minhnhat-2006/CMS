@@ -1,13 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace CMS.Pages
+namespace CMS.Pages.Admin
 {
-    public class PrivacyModel : PageModel
+    public class _ViewStartModel : PageModel
     {
         public void OnGet()
         {
         }
     }
-
 }

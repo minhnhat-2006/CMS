@@ -5,7 +5,7 @@
 }
 
 <style>
-    /* CSS CHO THANH TIẾN TRÌNH WIZARD */
+    /* ... (Giữ nguyên CSS Wizard Progress của bạn) ... */
     .wizard-progress {
         display: flex;
         justify-content: space-between;
@@ -13,60 +13,13 @@
         margin-bottom: 2.5rem;
         padding: 0 2rem;
     }
+    /* ... (Các đoạn CSS khác giữ nguyên) ... */
 
-        .wizard-progress::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 2rem;
-            right: 2rem;
-            height: 4px;
-            background-color: #e9ecef;
-            z-index: 1;
-            transform: translateY(-50%);
-            border-radius: 2px;
-        }
-
-    .step-item {
-        position: relative;
-        z-index: 2;
-        text-align: center;
-        background: #f8f9fa; /* Màu nền web để che cái vạch đi */
-        padding: 0 10px;
-    }
-
-    .step-circle {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background-color: #e9ecef;
-        color: #6c757d;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 1.3rem;
-        margin: 0 auto 0.5rem auto;
-        border: 4px solid #fff;
-        transition: all 0.3s ease;
-    }
-
-    .step-text {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    /* Đang ở bước này (Active) */
-    .step-item.active .step-circle {
-        background-color: #0d6efd;
-        color: #fff;
-        box-shadow: 0 0 0 5px rgba(13, 110, 253, 0.2);
-    }
-
-    .step-item.active .step-text {
-        color: #0d6efd;
+    /* Thêm một chút hiệu ứng cho Badge loại luồng */
+    .badge-mode {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+        letter-spacing: 1px;
     }
 </style>
 
@@ -91,11 +44,27 @@
 
         <div class="col-lg-7">
             <div class="card shadow border-0 rounded-4 h-100">
-                <div class="card-header bg-dark text-white py-3 px-4">
+                <div class="card-header bg-dark text-white py-3 px-4 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Thiết lập Menu</h5>
+
+                    @if (Model.MenuType == 2)
+                    {
+                        <span class="badge rounded-pill bg-danger badge-mode"><i class="bi bi-layers-half me-1"></i> NHIỀU BÀI VIẾT</span>
+                    }
+                    else
+                    {
+                        <span class="badge rounded-pill bg-primary badge-mode"><i class="bi bi-file-earmark-text me-1"></i> TRANG ĐƠN</span>
+                    }
                 </div>
 
                 <div class="card-body p-4">
+                    @if (Model.MenuType == 2)
+                    {
+                        <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-3">
+                            <i class="bi bi-lightning-charge-fill me-2"></i> <strong>Chế độ thiết lập nhanh:</strong> Hệ thống sẽ tự động tạo một <b>Chuyên mục</b> trùng tên với Menu này để chứa danh sách bài viết.
+                        </div>
+                    }
+
                     @if (Model.TargetParentId > 0)
                     {
                         <div class="alert alert-info border-0 shadow-sm rounded-3">
@@ -110,10 +79,14 @@
                     }
 
                     <form method="post">
+                        <input type="hidden" asp-for="MenuType" />
                         <input type="hidden" asp-for="TargetParentId" />
+                        <input type="hidden" asp-for="MenuType" />
 
                         <div class="mb-4 mt-2">
-                            <label class="form-label fw-bold text-uppercase text-muted" style="font-size: 0.85rem;">Tên Menu (*)</label>
+                            <label class="form-label fw-bold text-uppercase text-muted" style="font-size: 0.85rem;">
+                                @(Model.MenuType == 2 ? "Tên Menu & Chuyên mục (*)" : "Tên Menu (*)")
+                            </label>
                             <input asp-for="Menu.Name" id="menuNameInput" class="form-control form-control-lg fw-bold text-primary" placeholder="Nhập tên hiển thị..." required autocomplete="off" />
                         </div>
 
@@ -140,7 +113,7 @@
                             </button>
 
                             <button type="submit" name="SubmitAction" value="next" class="btn btn-primary px-4 fw-bold shadow">
-                                Qua Bước 2 <i class="bi bi-arrow-right ms-1"></i>
+                                Tiếp theo (Bước 2) <i class="bi bi-arrow-right ms-1"></i>
                             </button>
                         </div>
                     </form>
@@ -153,7 +126,14 @@
                 <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center">
 
                     <div class="mb-4 opacity-50">
-                        <i class="bi bi-laptop" style="font-size: 4rem;"></i>
+                        @if (Model.MenuType == 2)
+                        {
+                            <i class="bi bi-collection-play" style="font-size: 4rem;"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-laptop" style="font-size: 4rem;"></i>
+                        }
                     </div>
                     <h6 class="text-muted text-uppercase fw-bold tracking-wide mb-4">Xem trước ngoài Trang chủ</h6>
 
@@ -166,7 +146,10 @@
                     </div>
 
                     <p class="text-muted small mt-4 opacity-75">
-                        <i class="bi bi-info-circle me-1"></i> Giao diện nháp để giúp bạn hình dung độ dài của Tên Menu khi hiển thị thực tế.
+                        <i class="bi bi-info-circle me-1"></i>
+                        @(Model.MenuType == 2
+                                                ? "Menu này sẽ dẫn người dùng đến trang Danh sách các bài viết."
+                                                : "Menu này sẽ dẫn người dùng đến một trang nội dung duy nhất.")
                     </p>
 
                 </div>
@@ -181,10 +164,8 @@
         const inputField = document.getElementById('menuNameInput');
         const previewText = document.getElementById('menuPreviewText');
 
-        // Bắt sự kiện gõ phím
         inputField.addEventListener('input', function (e) {
             let text = e.target.value.trim();
-            // Nếu có chữ thì hiện chữ đó, nếu xóa hết thì hiện chữ mặc định
             previewText.innerText = text ? text : 'Tên Menu';
         });
     });

@@ -3,7 +3,9 @@ using CMS.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Linq; // Thêm thư viện này nếu cần
 using System.Threading.Tasks;
+using YourProjectName.Models;
 
 namespace CMS.Pages.Admin.Wizard
 {
@@ -17,22 +19,23 @@ namespace CMS.Pages.Admin.Wizard
             _context = context;
         }
 
-        // 1. Thực thể Menu sẽ được lưu vào DB
         [BindProperty]
         public NavigationMenu Menu { get; set; } = new NavigationMenu();
 
-        // 2. Chốt chặn ID Cha (Chỉ nhận từ URL, tuyệt đối không cho form HTML sửa đổi)
         [BindProperty]
         public int? TargetParentId { get; set; }
 
         [BindProperty]
         public string SubmitAction { get; set; } = "";
 
+        [BindProperty(SupportsGet = true)]
+        public int MenuType { get; set; } = 1;
+
         public string? ParentName { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(int? parentId)
+        public async Task<IActionResult> OnGetAsync(int? parentId, int type = 1)
         {
-            // Nhận ID cha từ URL và khóa lại
+            MenuType = type;
             TargetParentId = parentId;
 
             if (parentId.HasValue && parentId.Value > 0)
@@ -49,53 +52,100 @@ namespace CMS.Pages.Admin.Wizard
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // Gỡ bỏ validation rác của Entity Framework
             ModelState.Remove("Menu.Parent");
             ModelState.Remove("Menu.Children");
             ModelState.Remove("Menu.LinkedPage");
             ModelState.Remove("Menu.SidebarItems");
+            ModelState.Remove("Menu.ChuyenMuc");
 
             if (!ModelState.IsValid)
             {
                 return Page();
             }
 
-            // Gán ID Cha an toàn vào Menu trước khi lưu
-            Menu.ParentId = TargetParentId > 0 ? TargetParentId : null;
+            // Ensure correct handling of nullable TargetParentId when assigning ParentId
+            Menu.ParentId = (TargetParentId.HasValue && TargetParentId.Value > 0) ? TargetParentId : null;
 
-            // LƯU VÀO DATABASE
-            _context.NavigationMenus.Add(Menu);
-            await _context.SaveChangesAsync();
-            // Vừa lưu xong, biến Menu.Id sẽ tự động có số ID mới tinh từ PostgreSQL!
+            // Hàm tạo Slug linh hoạt từ tên Menu (Xóa dấu cách, đổi chữ thường)
+            var slug = (Menu.Name ?? string.Empty).Replace(" ", "-").ToLowerInvariant();
 
-            // ------------------------------------------------------------------
-            // 🔥 BƯỚC QUAN TRỌNG: TÌM TÊN MENU CHA ĐỂ KẾ THỪA CATEGORY CHO BƯỚC 2
-            // ------------------------------------------------------------------
-            string rootCategoryName = Menu.Name; // Mặc định: Nếu là Menu Gốc thì lấy tên của chính nó
-
-            if (TargetParentId.HasValue && TargetParentId.Value > 0)
+            // Lấy thông tin Menu Cha (nếu có)
+            NavigationMenu? parentMenu = null;
+            if (Menu.ParentId.HasValue)
             {
-                var parentMenu = await _context.NavigationMenus.FindAsync(TargetParentId.Value);
-                if (parentMenu != null)
-                {
-                    rootCategoryName = parentMenu.Name; // Nếu là Menu con -> Kế thừa tên Menu Cha! (VD: Lấy tên "giới thiệu")
-                }
+                parentMenu = await _context.NavigationMenus.FindAsync(Menu.ParentId.Value);
             }
 
-            // ĐIỀU HƯỚNG BẰNG LOGIC CỨNG (KHÔNG THỂ SAI)
+            // ==================================================================
+            // 🔥 LOGIC MỚI: TỰ ĐỘNG ÉP KIỂU VÀ KẾ THỪA URL THÔNG MINH
+            // ==================================================================
+
+            // TỰ ĐỘNG ÉP KIỂU: Nếu mục cha là Chuyên mục, mục con tạo ra tự động làm Hub con
+            if (parentMenu != null && parentMenu.ChuyenMucId.HasValue)
+            {
+                MenuType = 2;
+            }
+
+            if (MenuType == 2)
+            {
+                if (parentMenu != null && parentMenu.ChuyenMucId.HasValue)
+                {
+                    // [TRƯỜNG HỢP 1]: LÀ MỤC CON
+                    // Kế thừa ID Chuyên Mục từ cha
+                    Menu.ChuyenMucId = parentMenu.ChuyenMucId;
+
+                    // Tạo URL con kế thừa URL cha (VD: /thong-bao/nha-truong)
+                    string parentPath = !string.IsNullOrEmpty(parentMenu.Url) && parentMenu.Url != "#" ? parentMenu.Url.TrimEnd('/') : "";
+                    Menu.Url = $"{parentPath}/{slug}";
+                }
+                else
+                {
+                    // [TRƯỜNG HỢP 2]: LÀ MỤC CHA GỐC
+                    // Phải tạo mới hoàn toàn ChuyenMuc để có ID độc lập
+                    var newChuyenMuc = new ChuyenMuc
+                    {
+                        Name = Menu.Name,
+                        Slug = slug
+                    };
+                    _context.ChuyenMucs.Add(newChuyenMuc);
+                    await _context.SaveChangesAsync(); // Lưu để lấy ID thật
+
+                    Menu.ChuyenMucId = newChuyenMuc.Id;
+                    Menu.Url = $"/{slug}";
+                }
+            }
+            else if (MenuType == 1)
+            {
+                // [TRƯỜNG HỢP 3]: LÀ TRANG TĨNH ĐỘC LẬP
+                if (parentMenu != null && parentMenu.ChuyenMucId.HasValue)
+                {
+                    Menu.ChuyenMucId = parentMenu.ChuyenMucId;
+                }
+                Menu.Url = "#"; // Đánh dấu là trang tĩnh
+            }
+
+            // LƯU MENU VÀO DATABASE
+            _context.NavigationMenus.Add(Menu);
+            await _context.SaveChangesAsync();
+
+            // ------------------------------------------------------------------
+            // ĐIỀU HƯỚNG SAU KHI LƯU
+            // ------------------------------------------------------------------
             if (SubmitAction == "sibling")
             {
-                // TẠO ANH EM: Gọi lại trang này, truyền URL là ID Cha gốc (TargetParentId)
-                return RedirectToPage("./Step1_Menu", new { parentId = TargetParentId });
+                return RedirectToPage("./Step1_Menu", new { parentId = TargetParentId, type = MenuType });
             }
             else if (SubmitAction == "child")
             {
-                // TẠO CON: Gọi lại trang này, truyền URL là cái ID vừa mới ra lò (Menu.Id)
-                return RedirectToPage("./Step1_Menu", new { parentId = Menu.Id });
+                return RedirectToPage("./Step1_Menu", new { parentId = Menu.Id, type = MenuType });
             }
 
-            // MẶC ĐỊNH: Qua bước 2 VÀ NÉM THEO TÊN CATEGORY ĐÃ KẾ THỪA
-            return RedirectToPage("./Step2_ArticleModel", new { menuId = Menu.Id, categoryName = rootCategoryName });
+            return RedirectToPage("./Step2_ArticleModel", new
+            {
+                menuId = Menu.Id,
+                chuyenMucId = MenuType == 2 ? Menu.ChuyenMucId : null,
+                type = MenuType
+            });
         }
     }
 }

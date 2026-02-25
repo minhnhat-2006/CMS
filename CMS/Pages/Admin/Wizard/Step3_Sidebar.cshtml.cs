@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace CMS.Pages.Admin.Wizard
 {
     public class Step3_SidebarModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+
         public Step3_SidebarModel(ApplicationDbContext context) => _context = context;
 
         [BindProperty]
@@ -18,6 +20,7 @@ namespace CMS.Pages.Admin.Wizard
         [BindProperty]
         public bool HasSidebar { get; set; }
 
+        // --- Các property dùng cho Preview UI ---
         public string PreviewTitle { get; set; } = "";
         public string PreviewContent { get; set; } = "";
         public string PreviewCategory { get; set; } = "";
@@ -25,7 +28,12 @@ namespace CMS.Pages.Admin.Wizard
         public async Task<IActionResult> OnGetAsync(int id)
         {
             if (id <= 0) return RedirectToPage("./Step1_Menu");
-            var page = await _context.ContentPages.FindAsync(id);
+
+            // Tối ưu: Dùng AsNoTracking vì chỉ để lấy dữ liệu Preview lên UI
+            var page = await _context.ContentPages
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (page == null) return NotFound();
 
             ContentPageId = page.Id;
@@ -33,7 +41,7 @@ namespace CMS.Pages.Admin.Wizard
 
             // Đổ dữ liệu thật từ DB vào biến Preview
             PreviewTitle = page.Title;
-            PreviewContent = page.Content;
+            PreviewContent = page.Content; // Ghi chú: Nếu content dài, trên UI nhớ cắt chuỗi (Substring)
             PreviewCategory = page.Category;
 
             // Kiểm tra xem Menu Gốc (Category) đã có Sidebar nào chưa?
@@ -51,15 +59,23 @@ namespace CMS.Pages.Admin.Wizard
 
         public async Task<IActionResult> OnPostAsync()
         {
+            if (!ModelState.IsValid)
+            {
+                // Nếu có lỗi binding, cần xử lý load lại Preview ở đây (tuy nhiên form này đơn giản nên ít xảy ra lỗi)
+                return Page();
+            }
+
+            // Tracking bật để thực hiện Update
             var pageToUpdate = await _context.ContentPages.FindAsync(ContentPageId);
             if (pageToUpdate == null) return NotFound();
 
             pageToUpdate.HasSidebar = HasSidebar;
 
-            // 🔥 DỜI ĐOẠN TÌM MENU LÊN ĐÂY!
-            // Truy tìm Menu gốc chứa bài viết này để lấy MenuId
-            var linkedMenu = await _context.NavigationMenus.FirstOrDefaultAsync(m => m.ContentPageId == pageToUpdate.Id);
-            int finalMenuId = linkedMenu != null ? linkedMenu.Id : 0;
+            // 🔥 TỐI ƯU: Chỉ Select đúng cột Id từ database thay vì lấy cả dòng Menu
+            var finalMenuId = await _context.NavigationMenus
+                .Where(m => m.ContentPageId == pageToUpdate.Id)
+                .Select(m => m.Id)
+                .FirstOrDefaultAsync();
 
             if (HasSidebar)
             {
@@ -75,11 +91,12 @@ namespace CMS.Pages.Admin.Wizard
                         Category = pageToUpdate.Category,
                         ContentPageId = null,
 
-                        // 🔥 NÚT THẮT QUAN TRỌNG NHẤT LÀ ĐÂY:
-                        MenuId = finalMenuId > 0 ? finalMenuId : null // Gắn chặt ID vào để hết bị liệt đếm!
+                        // 🔥 NÚT THẮT QUAN TRỌNG: Gắn chặt ID vào để hết bị liệt đếm!
+                        MenuId = finalMenuId > 0 ? finalMenuId : null
                     });
                 }
             }
+
             await _context.SaveChangesAsync();
 
             // Chuyển sang trang Success mượt mà

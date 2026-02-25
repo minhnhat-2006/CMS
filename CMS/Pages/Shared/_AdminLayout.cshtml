@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - MUCE Admin CMS</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container, .container-fluid {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* HEADER */
+        .admin-header {
+            background-color: #004085;
+            color: white;
+            height: 65px;
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* SIDEBAR */
+        .admin-sidebar {
+            width: 260px;
+            height: calc(100vh - 65px);
+            background-color: #1e2125; /* Làm màu nền tối sâu hơn một chút cho sang */
+            color: white;
+            position: sticky;
+            top: 65px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(0,0,0,0.05);
+            z-index: 1000;
+        }
+
+            .admin-sidebar::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            .admin-sidebar::-webkit-scrollbar-thumb {
+                background-color: #495057;
+                border-radius: 10px;
+            }
+
+        /* --- STYLE MỚI CHO CÁC MỤC MENU (ĐẬM CHẤT HIỆN ĐẠI) --- */
+        .sidebar-link {
+            color: #adb5bd; /* Màu xám nhạt tinh tế */
+            text-decoration: none;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            border-radius: 10px; /* Bo góc mềm mại hơn */
+            margin: 0 12px 6px 12px; /* Thụt lề 2 bên để tạo hình viên thuốc (pill) */
+            transition: all 0.25s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+            /* Chỉnh lại khoảng cách và kích thước icon */
+            .sidebar-link i {
+                font-size: 1.2rem;
+                margin-right: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform 0.2s ease;
+            }
+
+            /* Khi di chuột vào (Hover) */
+            .sidebar-link:hover {
+                background-color: rgba(255, 255, 255, 0.08);
+                color: #ffffff;
+                transform: translateX(4px);
+            }
+
+            /* Khi mục đang được chọn (Active) */
+            .sidebar-link.active {
+                background-color: #0d6efd;
+                color: #ffffff;
+                box-shadow: 0 4px 15px rgba(13, 110, 253, 0.35);
+                font-weight: 600;
+            }
+
+                /* Ép icon thành màu trắng nếu thẻ đang được chọn */
+                .sidebar-link.active i {
+                    color: #ffffff !important;
+                }
+
+                .sidebar-link.active:hover {
+                    transform: none; /* Active rồi thì không trượt nữa */
+                }
+
+        .admin-content-wrapper {
+            min-height: calc(100vh - 65px);
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="admin-header d-flex justify-content-between">
+        <div class="d-flex align-items-center">
+            <h5 class="mb-0 fw-bold me-3">ĐẠI HỌC XÂY DỰNG MIỀN TRUNG</h5>
+            <span class="badge bg-light text-primary">Phân hiệu Đà Nẵng</span>
+        </div>
+        <div class="d-flex align-items-center">
+            <span class="me-3"><i class="bi bi-person-circle"></i> Xin chào, Quản trị viên</span>
+            <a href="/" class="btn btn-sm btn-outline-light me-2"><i class="bi bi-eye"></i> Xem Website</a>
+            <a href="/Logout" class="btn btn-sm btn-warning"><i class="bi bi-box-arrow-right"></i> Thoát</a>
+        </div>
+    </header>
+
+    <div class="d-flex">
+
+        <div class="admin-sidebar py-3 shadow-sm">
+            <div class="d-flex align-items-center mb-4 px-4 mt-2">
+                <i class="bi bi-shield-lock-fill fs-3 text-primary me-2"></i>
+                <h4 class="mb-0 fw-bold text-white tracking-wide">MUCE CMS</h4>
+            </div>
+
+            <hr class="border-secondary mb-3 opacity-25" style="margin: 0 15px;">
+
+            <ul class="nav flex-column mt-3">
+                <li class="nav-item">
+                    <a class="sidebar-link active" asp-page="/Admin/Dashboard/Index">
+                        <i class="bi bi-house-door-fill text-primary"></i> Trang chủ
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="sidebar-link" asp-page="/Admin/DuAn/Index">
+                        <i class="bi bi-folder-fill" style="color: #ffc107;"></i> Dự án
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <main class="flex-grow-1 p-4 w-100 admin-content-wrapper">
+            @RenderBody()
+
+            <footer class="mt-auto pt-4 text-center text-muted small">
+                <hr />
+                &copy; 2026 - Bản quyền thuộc về nhà trường. Powered by MUCE CMS.
+            </footer>
+        </main>
+
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
