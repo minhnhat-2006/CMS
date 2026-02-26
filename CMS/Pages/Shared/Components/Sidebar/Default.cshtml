@@ -1,5 +1,5 @@
 ﻿@using CMS.Models
-@model IEnumerable<ContentPage>
+@model IEnumerable<NavigationMenu>
 
 <style>
     /* Bấm thu gọn lại, giữ nguyên 100% CSS cũ của bạn ở đây nhé */
@@ -61,11 +61,8 @@
 
 @{
     var config = ViewData["SidebarConfig"] as SidebarItem;
-    var firstArticle = Model?.FirstOrDefault();
-    var title = config?.Title ?? firstArticle?.Category ?? "Thông tin liên quan";
-
-    // 🔥 BẮT LẤY CỜ TỪ C#
-    bool isStaticType = ViewData["IsStaticType"] as bool? ?? false;
+    var title = config?.Title ?? Model?.FirstOrDefault()?.Name ?? "Thông tin liên quan";
+    var currentPath = Context.Request.Path.Value?.ToLower() ?? "";
 }
 
 <div class="sidebar-wrapper">
@@ -77,35 +74,28 @@
         @if (Model != null && Model.Any())
         {
             <div>
-                @foreach (var article in Model)
+                @foreach (var item in Model)
                 {
-                    string articleUrl = "";
-                    string cat = (article.Category ?? "").Trim('/');
-                    string slg = (article.Slug ?? "").Trim('/');
+                    string itemUrl = item.Url;
 
-                    // CHIA 2 LUỒNG CHÍNH XÁC 100%
-                    if (isStaticType)
+                    // Mượn y chang logic của Menu Ngang:
+                    // Nếu là bài 1-1 (Url = "#"), sinh link bài viết
+                    if (itemUrl == "#" && item.ContentPageId.HasValue && item.LinkedPage != null)
                     {
-                        // 1. Luồng 1-1 (Link: /bai-viet/Id/Slug)
-                        articleUrl = $"/bai-viet/{article.Id}/{slg}";
-                    }
-                    else
-                    {
-                        // 2. Luồng 1-N (Link: /Category/Slug)
-                        // Máy lọc rác: Nếu Slug có chứa luôn tên cha thì gọt đi
-                        if (slg.StartsWith(cat + "/"))
-                        {
-                            slg = slg.Substring(cat.Length + 1);
-                        }
-                        articleUrl = $"/{cat}/{slg}";
+                        itemUrl = $"/bai-viet/{item.LinkedPage.Id}/{item.LinkedPage.Slug}";
                     }
 
-                    // Ép đúng chuẩn 1 gạch chéo
-                    articleUrl = ("/" + articleUrl).Replace("//", "/");
+                    // Nếu là bài 1-N (Url = "/tt/hd"), tự động làm sạch và dùng luôn!
+                    if (!string.IsNullOrEmpty(itemUrl) && itemUrl != "#")
+                    {
+                        itemUrl = ("/" + itemUrl).Replace("//", "/");
+                    }
 
-                    <a href="@articleUrl" class="sidebar-item">
+                    string activeClass = (itemUrl != "#" && currentPath == itemUrl.ToLower()) ? "bg-light text-primary fw-bold" : "";
+
+                    <a href="@itemUrl" class="sidebar-item @activeClass">
                         <i class="bi bi-caret-right-fill"></i>
-                        @article.Title
+                        @item.Name
                     </a>
                 }
             </div>
@@ -115,12 +105,6 @@
         {
             <div class="sidebar-content-block">
                 @Html.Raw(config.Content)
-            </div>
-        }
-        else if (Model == null || !Model.Any())
-        {
-            <div class="sidebar-content-block text-muted fst-italic">
-                Không có dữ liệu bổ sung.
             </div>
         }
     </div>

@@ -122,8 +122,10 @@
             <div class="col-12 d-flex gap-3 flex-wrap">
                 @foreach (var child in Model.SidebarMenus)
                 {
-                    // Đã xóa lỗi duplicate thẻ a, bọc lại thành nút bấm đẹp mắt, route chuẩn
-                    <a href="/@sectionUrl/@child.Url" class="btn btn-outline-danger fw-bold rounded-pill px-4">
+                    // Cắt bỏ sectionUrl, chỉ dùng Url từ DB và làm sạch dấu gạch chéo
+                    string childUrl = ("/" + child.Url).Replace("//", "/");
+
+                    <a href="@childUrl" class="btn btn-outline-danger fw-bold rounded-pill px-4">
                         @child.Name
                     </a>
                 }
@@ -139,7 +141,11 @@
                     @foreach (var menu in Model.SidebarMenus)
                     {
                         var isActive = (menu.Name == Model.CategoryName) ? "active" : "";
-                        <a href="/@sectionUrl/@menu.Url" class="list-group-item list-group-item-action @isActive">
+
+                        // Cắt bỏ sectionUrl tương tự ở trên
+                        string menuUrl = ("/" + menu.Url).Replace("//", "/");
+
+                        <a href="@menuUrl" class="list-group-item list-group-item-action @isActive">
                             @menu.Name
                         </a>
                     }
