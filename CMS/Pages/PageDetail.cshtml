@@ -3,107 +3,104 @@
 @{
     ViewData["Title"] = Model.ContentPage.Title;
 
-    // --- LOGIC MỚI: Kiểm tra xem bài này có bật Sidebar không ---
-    // Nếu HasSidebar = true -> showSidebar = true
+    // --- LOGIC: Kiểm tra bật tắt Sidebar ---
     bool showSidebar = Model.ContentPage.HasSidebar;
 
-    // Tính toán class cho cột nội dung:
-    // - Có Sidebar: dùng col-lg-8 (chiếm 2/3 màn hình)
-    // - Không Sidebar: dùng col-12 (chiếm full màn hình)
-    string contentClass = showSidebar ? "col-lg-8" : "col-12";
+    // Tính toán class: Có Sidebar thì chiếm 9 phần bên phải, không có thì Full
+    string contentClass = showSidebar ? "col-lg-9" : "col-12";
 }
 
 <style>
     /* =========================================================
-                    NỀN VÀ CẤU TRÚC CHUNG
-               ========================================================= */
+           CSS CHUẨN PHONG CÁCH HUST (BÁCH KHOA)
+        ========================================================= */
     body {
-        background-color: #f0f2f5;
+        background-color: #ffffff !important;
     }
+    /* Nền trắng bóc */
 
     .page-container {
-        padding: 40px 0;
+        padding: 30px 0 60px 0;
         min-height: 100vh;
     }
 
-    /* =========================================================
-                    TỜ GIẤY BÀI VIẾT (CỘT TRÁI)
-               ========================================================= */
-    .paper-view {
-        background: white;
-        min-height: 800px;
-        padding: 50px 60px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        border-radius: 8px;
-        position: relative;
-        transition: all 0.3s ease; /* Thêm hiệu ứng mượt khi thay đổi kích thước */
+    /* 1. Thanh điều hướng Breadcrumb */
+    .hust-breadcrumb {
+        font-family: Arial, sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 25px;
+        letter-spacing: 0.5px;
     }
 
-    /* TYPOGRAPHY */
-    .page-title {
-        font-family: 'Times New Roman', serif;
-        font-size: 2.6rem;
+        .hust-breadcrumb a {
+            color: #B3000F;
+            text-decoration: none;
+        }
+
+            .hust-breadcrumb a:hover {
+                text-decoration: none !important; /* 🔥 Đã xóa gạch chân */
+                opacity: 0.8; /* Thêm hiệu ứng mờ nhẹ đi một chút cho có cảm giác bấm */
+            }
+
+        .hust-breadcrumb .separator {
+            margin: 0 10px;
+            color: #B3000F;
+            font-weight: normal;
+        }
+
+    /* 2. Tiêu đề bài viết */
+    .article-title {
+        font-family: Arial, sans-serif;
+        font-size: 26px;
         font-weight: bold;
-        color: #1a1a1a;
-        margin-bottom: 1.2rem;
-        line-height: 1.3;
+        color: #333333;
+        text-transform: uppercase; /* Ép chữ in hoa toàn bộ */
+        margin-bottom: 15px;
+        line-height: 1.4;
     }
 
-    .page-meta {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding-bottom: 25px;
-        margin-bottom: 35px;
-        color: #6c757d;
-        font-size: 0.95rem;
-        border-bottom: 1px solid #eee;
+    /* 3. Dòng thời gian & Công cụ (Meta) */
+    .article-meta {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        color: #555555;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
     }
 
-    .badge-category {
-        background-color: #e9ecef;
-        color: #495057;
-        font-weight: 600;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
+    .article-actions i {
+        font-size: 18px;
+        color: #777777;
+        margin-left: 18px;
+        cursor: pointer;
+        transition: color 0.2s;
     }
 
-    /* NỘI DUNG BÀI VIẾT (TinyMCE Output) */
-    .content-body {
+        .article-actions i:hover {
+            color: #B3000F;
+        }
+
+    /* 4. Nội dung bài viết (Giữ nguyên các thuộc tính xịn của bác) */
+    .article-content {
         font-family: 'Times New Roman', serif;
         font-size: 20px;
         line-height: 1.7;
-        color: #2c3e50;
+        color: #222222;
         text-align: justify;
     }
 
-        .content-body img {
+        .article-content img {
             max-width: 100%;
             height: auto;
             display: block;
             margin: 25px auto;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .content-body h2 {
-            font-size: 1.8rem;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            color: #000;
-            border-left: 4px solid #0d6efd;
-            padding-left: 15px;
-        }
-
-        .content-body h3 {
-            font-size: 1.5rem;
-            margin-top: 1.5rem;
-            font-weight: bold;
-        }
-
-        /* Quote Box */
-        .content-body .quote-classic {
+        /* Bảng và Quote của bác giữ lại nguyên vẹn */
+        .article-content .quote-classic {
             background: #f8f9fa;
             border-left: 5px solid #007bff;
             padding: 25px;
@@ -112,120 +109,83 @@
             color: #555;
         }
 
-        /* Table */
-        .content-body table {
+        .article-content table {
             width: 100%;
             border-collapse: collapse;
             margin: 25px 0;
             font-size: 18px;
         }
 
-            .content-body table th {
+            .article-content table th {
                 background-color: #003366;
                 color: white;
                 text-align: left;
                 padding: 12px 15px;
             }
 
-            .content-body table td {
+            .article-content table td {
                 border: 1px solid #dee2e6;
                 padding: 12px 15px;
             }
 
-            .content-body table tr:nth-child(even) {
+            .article-content table tr:nth-child(even) {
                 background-color: #f8f9fa;
             }
-
-    /* BACK BUTTON */
-    .back-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 60px;
-        padding: 12px 28px;
-        background: #f1f3f5;
-        color: #495057;
-        text-decoration: none;
-        border-radius: 50px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-
-        .back-button:hover {
-            background: #e2e6ea;
-            color: #212529;
-            transform: translateX(-3px);
-        }
-
-    /* =========================================================
-                    SIDEBAR
-               ========================================================= */
-    .sidebar-wrapper {
-        padding-left: 20px;
-    }
-
-    /* Tùy chỉnh thêm: Khi full màn hình (không có sidebar), canh lề rộng hơn cho dễ đọc */
-    .col-12 .paper-view {
-        padding: 60px 100px;
-    }
-
-    @@media (max-width: 992px) {
-        .sidebar-wrapper {
-            padding-left: 0;
-            margin-top: 40px;
-        }
-
-        .paper-view, .col-12 .paper-view {
-            padding: 30px 20px; /* Reset padding trên mobile */
-        }
-
-        .page-title {
-            font-size: 2rem;
-        }
-    }
 </style>
 
 <div class="page-container">
     <div class="container">
+
+        <div class="hust-breadcrumb">
+            <a href="/" title="Về trang chủ">TRANG CHỦ</a>
+
+            @if (!string.IsNullOrEmpty(Model.ContentPage.Category))
+            {
+                <span class="separator">›</span>
+                <span style="color: #B3000F;" title="Chuyên mục hiện tại">
+                    @Model.ContentPage.Category.ToUpper()
+                </span>
+            }
+        </div>
         <div class="row">
-
-            <div class="@contentClass">
-                <div class="paper-view">
-                    <article>
-                        <h1 class="page-title">@Model.ContentPage.Title</h1>
-
-                        <div class="page-meta">
-                            <span>
-                                <i class="bi bi-calendar-event me-1"></i>
-                                @Model.ContentPage.CreatedAt.ToString("dd/MM/yyyy")
-                            </span>
-
-                            <span class="badge-category">
-                                <i class="bi bi-folder2-open me-1"></i>
-                                @Model.ContentPage.Category
-                            </span>
-                        </div>
-
-                        <div class="content-body">
-                            @Html.Raw(Model.ContentPage.Content)
-                        </div>
-                    </article>
-
-                    <a href="/" class="back-button">
-                        <i class="bi bi-arrow-left"></i>
-                        Quay lại trang chủ
-                    </a>
-                </div>
-            </div>
 
             @if (showSidebar)
             {
-                <div class="col-lg-4">
+                <div class="col-lg-3 mb-4 pe-lg-4">
                     <div class="sidebar-wrapper sticky-top" style="top: 20px; z-index: 10;">
                         @await Component.InvokeAsync("Sidebar", new { currentCategory = Model.ContentPage.Category })
                     </div>
                 </div>
             }
+
+            <div class="@contentClass">
+                <article>
+                    <h1 class="article-title">@Model.ContentPage.Title</h1>
+
+                    <div class="article-meta d-flex justify-content-between align-items-center">
+                        <span>
+                            @{
+                                // Code "độ" lại để hiển thị "Thứ mấy - ngày/tháng/năm giờ:phút"
+                                var culture = new System.Globalization.CultureInfo("vi-VN");
+                                string formattedDate = Model.ContentPage.CreatedAt.ToString("dddd - dd/MM/yyyy HH:mm", culture);
+                                // Viết hoa chữ cái đầu (VD: thứ năm -> Thứ năm)
+                                formattedDate = char.ToUpper(formattedDate[0]) + formattedDate.Substring(1);
+                            }
+                            @formattedDate
+                        </span>
+
+                        <div class="article-actions">
+                            <i class="bi bi-envelope-fill" title="Gửi email"></i>
+                            <i class="bi bi-printer-fill" title="In bài viết" onclick="window.print()"></i>
+                            <i class="bi bi-floppy-fill" title="Lưu bài viết"></i>
+                        </div>
+                    </div>
+
+                    <div class="article-content">
+                        @Html.Raw(Model.ContentPage.Content)
+                    </div>
+                </article>
+            </div>
 
         </div>
     </div>

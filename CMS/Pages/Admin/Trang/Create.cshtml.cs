@@ -2,8 +2,12 @@
 using CMS.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering; // Cần cái này
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CMS.Pages.Trang
 {
@@ -17,49 +21,118 @@ namespace CMS.Pages.Trang
         }
 
         [BindProperty]
-        public ContentPage ContentPageItem { get; set; } = default!;
+        public ContentPage ContentPageItem { get; set; } = new ContentPage();
 
-        public IActionResult OnGet()
+        [BindProperty]
+        public int? TargetMenuId { get; set; }
+
+        public async Task<IActionResult> OnGetAsync(int? menuId)
         {
-            // Lấy các Menu Cha, đang hiện
-            var menus = _context.NavigationMenus
-                .Where(x => x.ParentId == null && x.IsVisible)
-                .OrderBy(x => x.DisplayOrder)
-                .ToList(); // Lấy về danh sách trước
+            var menus = await _context.NavigationMenus
+                                      .OrderBy(m => m.DisplayOrder)
+                                      .ToListAsync();
 
-            // Tạo danh sách chuyên mục để hiển thị
-            var categoryList = menus.Select(x => new
-            {
-                Name = x.Name,
-                // Nếu Url có giá trị thì dùng Url, nếu không thì dùng chính cái Name làm Slug tạm
-                Value = !string.IsNullOrEmpty(x.Url)
-                        ? x.Url.Replace("/", "").ToLower().Trim()
-                        : x.Name.ToLower().Trim() // Hoặc logic gì đó bạn muốn lưu vào cột Category
-            }).ToList();
+            ViewData["CategoryList"] = new SelectList(menus, "Id", "Name", menuId);
 
-            ViewData["CategoryList"] = new SelectList(categoryList, "Value", "Name");
+            ContentPageItem.IsVisible = true;
+            ContentPageItem.HasSidebar = true;
+
+            if (menuId.HasValue)
+                TargetMenuId = menuId.Value;
 
             return Page();
         }
+
         public async Task<IActionResult> OnPostAsync()
         {
+            ModelState.Remove("ContentPageItem.SidebarItems");
+            ModelState.Remove("ContentPageItem.Category");
+
             if (!ModelState.IsValid)
             {
-                // QUAN TRỌNG: Nếu lỗi (quên nhập tiêu đề...), phải Load lại Menu
-                // Nếu không Dropdown sẽ bị trống trơn
-                return OnGet();
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                string errorString = string.Join("\\n- ", errors);
+                string scriptError = $@"<script>alert('LƯU THẤT BẠI! Thiếu dữ liệu:\n- {errorString}'); history.back();</script>";
+                return Content(scriptError, "text/html");
             }
 
-            // Tự động tạo Slug nếu chưa có
-            if (string.IsNullOrEmpty(ContentPageItem.Slug))
+            // ✅ Xử lý upload thumbnail
+            if (ContentPageItem.ThumbnailFile != null && ContentPageItem.ThumbnailFile.Length > 0)
             {
-                // (Logic tạo slug của bạn ở đây nếu có)
+                var file = ContentPageItem.ThumbnailFile;
+
+                // Validate loại file
+                var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+                if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                {
+                    string scriptTypeErr = "<script>alert('Ảnh không hợp lệ! Chỉ chấp nhận JPG, PNG, WEBP, GIF.'); history.back();</script>";
+                    return Content(scriptTypeErr, "text/html");
+                }
+
+                // Validate dung lượng (5MB)
+                if (file.Length > 5 * 1024 * 1024)
+                {
+                    string scriptSizeErr = "<script>alert('Ảnh vượt quá 5MB! Vui lòng chọn ảnh nhỏ hơn.'); history.back();</script>";
+                    return Content(scriptSizeErr, "text/html");
+                }
+
+                // Tạo thư mục nếu chưa có
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "thumbnails");
+                Directory.CreateDirectory(uploadsFolder);
+
+                // Tên file unique
+                var ext = Path.GetExtension(file.FileName).ToLower();
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                ContentPageItem.Thumbnail = $"/uploads/thumbnails/{fileName}";
             }
 
+            // Móc nối dữ liệu với Menu
+            if (TargetMenuId.HasValue)
+            {
+                var targetMenu = await _context.NavigationMenus.FindAsync(TargetMenuId.Value);
+                if (targetMenu != null)
+                {
+                    ContentPageItem.ChuyenMucId = targetMenu.ChuyenMucId;
+                    ContentPageItem.Category = targetMenu.Name;
+                }
+            }
+
+            // Khởi tạo các trường mặc định
+            ContentPageItem.CreatedAt = DateTime.UtcNow;
+            ContentPageItem.ViewCount = 0;
+
+            // Lưu bài viết vào DB
             _context.ContentPages.Add(ContentPageItem);
             await _context.SaveChangesAsync();
 
-            return RedirectToPage("./Index");
+            // Lưu ngược ID bài viết vào Menu
+            if (TargetMenuId.HasValue)
+            {
+                var menuToUpdate = await _context.NavigationMenus.FindAsync(TargetMenuId.Value);
+                if (menuToUpdate != null)
+                {
+                    menuToUpdate.ContentPageId = ContentPageItem.Id;
+                    _context.NavigationMenus.Update(menuToUpdate);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            string scriptSuccess = $@"
+            <script>
+                alert('Đã xuất bản bài viết thành công!');
+                window.parent.reloadTrang();
+            </script>";
+            return Content(scriptSuccess, "text/html");
         }
     }
 }

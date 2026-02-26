@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using YourProjectName.Models;
-
+using Microsoft.AspNetCore.Http; // BẮT BUỘC ĐỂ DÙNG IFormFile
 namespace CMS.Models
 {
     public class ContentPage
@@ -49,6 +49,9 @@ namespace CMS.Models
         [Display(Name = "Ảnh đại diện")]
         [StringLength(500)]
         public string? Thumbnail { get; set; }
+        [NotMapped]
+        [Display(Name = "Chọn ảnh tải lên")]
+        public IFormFile? ThumbnailFile { get; set; }
 
         [Display(Name = "Lượt xem")]
         public int ViewCount { get; set; } = 0;

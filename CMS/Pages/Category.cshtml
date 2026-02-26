@@ -3,148 +3,118 @@
 @{
     ViewData["Title"] = Model.CategoryName;
     bool isHub = Model.IsHub;
-
-    // LẤY SECTION TỪ URL (Hoàn toàn động)
     string sectionUrl = RouteData.Values["section"]?.ToString();
 }
 
 <style>
-    :root {
-        --bk-red: #B3000F;
-        --bk-text: #333333;
+    body {
+        background-color: #ffffff !important;
     }
 
-    .custom-breadcrumb {
+    .hust-breadcrumb {
+        font-family: Arial, sans-serif;
+        font-size: 15px;
         font-weight: 700;
         text-transform: uppercase;
-        font-size: 1.1rem;
-        margin-bottom: 30px;
-        color: var(--bk-red);
+        margin-bottom: 25px;
+        letter-spacing: 0.5px;
     }
 
-    .custom-breadcrumb a {
-        color: var(--bk-red);
+        .hust-breadcrumb a {
+            color: #B3000F;
+            text-decoration: none;
+        }
+
+            .hust-breadcrumb a:hover {
+                opacity: 0.8;
+                text-decoration: none !important;
+            }
+
+        .hust-breadcrumb .separator {
+            margin: 0 10px;
+            color: #B3000F;
+            font-weight: normal;
+        }
+
+    .btn-hub {
+        border: 1px solid #B3000F;
+        color: #B3000F;
+        background: transparent;
+        transition: all 0.2s;
+    }
+
+        .btn-hub:hover {
+            background-color: #B3000F;
+            color: #ffffff;
+        }
+
+    .article-title {
+        font-weight: bold;
+        color: #222222;
         text-decoration: none;
+        transition: color 0.2s;
+        line-height: 1.4;
     }
 
-    .custom-breadcrumb .separator {
-        margin: 0 10px;
-        font-size: 0.9rem;
-    }
+        .article-title:hover {
+            color: #B3000F;
+        }
 
-    .sidebar-menu .list-group-item {
-        border: none;
-        border-bottom: 1px solid #e0e0e0;
-        padding: 15px 20px;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--bk-text);
-        text-transform: uppercase;
-        transition: all 0.2s ease;
-    }
-
-    .sidebar-menu .list-group-item:hover {
-        background-color: #f9f9f9;
-        color: var(--bk-red);
-    }
-
-    .sidebar-menu .list-group-item.active {
-        background-color: var(--bk-red);
-        color: white;
-        border-color: var(--bk-red);
+    .article-meta {
+        color: #777777;
+        font-size: 0.85rem;
+        margin-top: 8px;
     }
 
     .article-item {
-        margin-bottom: 30px;
-    }
-
-    .article-thumbnail {
-        width: 100%;
-        height: 180px;
-        object-fit: cover;
-        border-radius: 4px;
-    }
-
-    .article-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #000;
-        line-height: 1.4;
-        margin-bottom: 10px;
-        transition: color 0.2s ease;
-        text-decoration: none;
-        display: block;
-    }
-
-    .article-title:hover {
-        color: var(--bk-red);
-    }
-
-    .article-meta {
-        font-size: 0.85rem;
-        color: #888;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .hub-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .hub-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        border-bottom: 1px solid #eeeeee;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
     }
 </style>
 
-<div class="container py-4">
+<div class="container py-4 mb-5">
     <div class="row">
         <div class="col-12">
-            <div class="custom-breadcrumb">
+            <div class="hust-breadcrumb">
                 <a href="/">TRANG CHỦ</a>
-                <span class="separator"><i class="bi bi-chevron-right"></i></span>
-                
+                <span class="separator">›</span>
+
                 @if (Model.ParentMenu != null)
                 {
                     <a href="/@sectionUrl">@Model.ParentMenu.Name.ToUpper()</a>
-                    <span class="separator"><i class="bi bi-chevron-right"></i></span>
+                    <span class="separator">›</span>
                 }
-                
-                <span>@Model.CategoryName.ToUpper()</span>
+
+                <span style="color: #B3000F;">@Model.CategoryName.ToUpper()</span>
             </div>
         </div>
     </div>
 
     @if (isHub && Model.SidebarMenus != null)
     {
-        <div class="row mb-5">
-            <div class="col-12 d-flex gap-3 flex-wrap">
+        <div class="row mb-5 mt-2">
+            <div class="col-12 d-flex gap-2 flex-wrap">
                 @foreach (var child in Model.SidebarMenus)
                 {
-                    // Cắt bỏ sectionUrl, chỉ dùng Url từ DB và làm sạch dấu gạch chéo
                     string childUrl = ("/" + child.Url).Replace("//", "/");
-
-                    <a href="@childUrl" class="btn btn-outline-danger fw-bold rounded-pill px-4">
-                        @child.Name
+                    <a href="@childUrl" class="btn btn-hub fw-bold px-4 rounded-0">
+                        @child.Name.ToUpper()
                     </a>
                 }
             </div>
         </div>
     }
 
-    <div class="row">
+    <div class="row mt-3">
         @if (!isHub)
         {
-            <div class="col-lg-3 mb-4 mb-lg-0">
-                <div class="list-group sidebar-menu rounded-0 shadow-sm">
+            <div class="col-lg-3 mb-4 mb-lg-0 pe-lg-4">
+                <div class="list-group sidebar-menu">
                     @foreach (var menu in Model.SidebarMenus)
                     {
                         var isActive = (menu.Name == Model.CategoryName) ? "active" : "";
-
-                        // Cắt bỏ sectionUrl tương tự ở trên
                         string menuUrl = ("/" + menu.Url).Replace("//", "/");
-
                         <a href="@menuUrl" class="list-group-item list-group-item-action @isActive">
                             @menu.Name
                         </a>
@@ -159,24 +129,25 @@
                 <div class="@(isHub ? "row row-cols-1 row-cols-md-3 g-4" : "")">
                     @foreach (var item in Model.Articles)
                     {
-                        var thumbUrl = string.IsNullOrEmpty(item.Thumbnail) 
-                                     ? "/images/default-thumbnail.jpg" 
-                                     : item.Thumbnail;
+                        var thumbUrl = string.IsNullOrEmpty(item.Thumbnail)
+                        ? "/images/default-thumbnail.jpg"
+                        : item.Thumbnail;
 
                         if (isHub)
                         {
                             <div class="col">
-                                <div class="card h-100 border-0 shadow-sm hub-card">
-                                    <a href="/bai-viet/@item.Id">
-                                        <img src="@thumbUrl" class="card-img-top article-thumbnail" alt="@item.Title">
+                                <div class="card h-100 border-0 bg-transparent">
+                                    <a href="/bai-viet/@item.Id" style="display: block;">
+                                        <div style="height: 200px; border-radius: 4px; background: url('@thumbUrl') top center / cover no-repeat #f0f0f0;">
+                                        </div>
                                     </a>
-                                    <div class="card-body px-0 pt-3 pb-0">
-                                        <a href="/bai-viet/@item.Id" class="article-title fs-5 mb-2">@item.Title</a>
+                                    <div class="card-body px-0 py-0 mt-3">
+                                        <a href="/bai-viet/@item.Id" class="article-title fs-5 d-block">@item.Title</a>
                                         <div class="article-meta">
-                                            <span><i class="bi bi-clock"></i> @item.CreatedAt.ToString("dd/MM/yyyy")</span>
+                                            <span><i class="bi bi-clock me-1"></i> @item.CreatedAt.ToString("dd/MM/yyyy")</span>
                                             @if (item.ViewCount > 0)
                                             {
-                                                <span><i class="bi bi-eye"></i> @item.ViewCount</span>
+                                                <span class="ms-3"><i class="bi bi-eye me-1"></i> @item.ViewCount</span>
                                             }
                                         </div>
                                     </div>
@@ -185,21 +156,22 @@
                         }
                         else
                         {
-                            <div class="row article-item">
+                            <div class="row article-item align-items-center">
                                 <div class="col-md-4 mb-3 mb-md-0">
-                                    <a href="/bai-viet/@item.Id">
-                                        <img src="@thumbUrl" class="article-thumbnail shadow-sm" alt="@item.Title">
+                                    <a href="/bai-viet/@item.Id" style="display: block;">
+                                        <div style="height: 180px; border-radius: 4px; background: url('@thumbUrl') top center / cover no-repeat #f0f0f0;">
+                                        </div>
                                     </a>
                                 </div>
                                 <div class="col-md-8">
-                                    <a href="/bai-viet/@item.Id" class="article-title">
+                                    <a href="/bai-viet/@item.Id" class="article-title fs-4 d-block mb-2">
                                         @item.Title
                                     </a>
                                     <div class="article-meta">
-                                        <span><i class="bi bi-clock"></i> @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                        <span><i class="bi bi-clock me-1"></i> @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
                                         @if (item.ViewCount > 0)
                                         {
-                                            <span><i class="bi bi-eye"></i> Đã xem: @item.ViewCount</span>
+                                            <span class="ms-3"><i class="bi bi-eye me-1"></i> Đã xem: @item.ViewCount</span>
                                         }
                                     </div>
                                 </div>

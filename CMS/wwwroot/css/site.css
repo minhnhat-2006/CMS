@@ -160,3 +160,58 @@
         display: none; /* Tắt gạch chân trên mobile */
     }
 }
+/* =========================================
+   MÃ CSS: SIDEBAR MENU STYLE (NỀN TRẮNG - ACTIVE ĐỎ)
+========================================= */
+:root {
+    --sidebar-bg: #ffffff; /* Nền trắng chủ đạo */
+    --main-text: #333333; /* Màu chữ đen xám chuẩn */
+    --active-red: #B3000F; /* Màu đỏ nổi bật khi chọn */
+}
+
+/* 1. Header của Sidebar - Đã ẩn trong HTML nên CSS này không tác dụng */
+.sidebar-header-global {
+    display: none;
+}
+
+/* 2. Khung chứa toàn bộ Menu */
+.sidebar-menu {
+    background-color: var(--sidebar-bg) !important; /* Ép nền trắng */
+    border: 1px solid #e0e0e0; /* Đường viền mỏng bao quanh */
+    border-radius: 4px; /* Bo góc nhẹ */
+    overflow: hidden;
+    padding: 0;
+}
+
+    /* 3. Từng mục Menu bình thường (CHƯA CHỌN) */
+    .sidebar-menu .list-group-item {
+        background-color: var(--sidebar-bg) !important; /* Nền trắng tĩnh */
+        color: var(--main-text) !important; /* Chữ đen */
+        border: none;
+        border-bottom: 1px solid #f0f0f0; /* Đường kẻ mỏng ngăn cách các bài */
+        padding: 15px 20px; /* Padding rộng rãi hơn */
+        font-size: 14.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        transition: all 0.2s ease-in-out;
+    }
+
+        /* Xóa viền đáy của item cuối cùng */
+        .sidebar-menu .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+        /* 4. Hiệu ứng khi lướt chuột (Hover) */
+        .sidebar-menu .list-group-item:hover {
+            background-color: #f9f9f9 !important; /* Nền xám nhạt khi hover */
+            color: var(--active-red) !important; /* Chữ đổi sang màu đỏ */
+            padding-left: 25px; /* Thụt đầu dòng nhẹ */
+        }
+
+        /* 5. Mục ĐANG ĐƯỢC CHỌN (Active) - Màu Đỏ như mẫu */
+        .sidebar-menu .list-group-item.active {
+            background-color: var(--active-red) !important; /* Nền đỏ nổi bật */
+            color: #ffffff !important; /* Chữ trắng */
+            border-color: var(--active-red) !important;
+            box-shadow: none; /* Loại bỏ bóng hoặc viền khác */
+        }

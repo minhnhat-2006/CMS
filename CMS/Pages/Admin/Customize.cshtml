@@ -2,26 +2,29 @@
 @model CMS.Pages.Admin.CustomizeModel
 @{
     ViewData["Title"] = "Tùy chỉnh cấu trúc Thẻ";
-    // Nếu file _Layout.cshtml của bạn nằm ở chỗ khác, hãy sửa lại đường dẫn này nhé
     Layout = "~/Pages/Shared/_Layout.cshtml";
+
+    // 🌟 CHÌA KHÓA: TÁCH DỮ LIỆU RA 2 TẬP ĐỘC LẬP NGAY TỪ ĐẦU
+    var staticPages = Model.TreeData.Where(f => f.ParentMenu.Url == "#").ToList();
+    var hubCategories = Model.TreeData.Where(f => f.ParentMenu.Url != "#").ToList();
 }
 
 <style>
-    /* 1. TĂNG KÍCH THƯỚC TỔNG THỂ CÂY THƯ MỤC */
     .custom-tree, .child-list {
         list-style-type: none;
-        padding-left: 25px; /* Thụt lề sâu hơn cho rõ cấp bậc */
-        font-size: 1.1rem; /* Phóng to cỡ chữ nền tảng */
+        padding-left: 25px;
+        font-size: 1.1rem;
     }
 
-    /* 2. THƯ MỤC GỐC (Cha - Cấp 1) */
+    /* Giao diện Header chung */
     .folder-header {
         cursor: pointer;
-        padding: 16px 20px; /* Thanh bấm dày và rộng hơn */
+        padding: 16px 20px;
         background-color: #f8f9fa;
         border-radius: 8px;
         margin-bottom: 12px;
         transition: background-color 0.2s;
+        border-left: 5px solid transparent;
     }
 
         .folder-header:hover {
@@ -29,230 +32,383 @@
         }
 
         .folder-header .fs-5 {
-            font-size: 1.4rem !important; /* Tên thư mục gốc to, rõ ràng */
+            font-size: 1.4rem !important;
         }
 
         .folder-header i {
-            font-size: 1.25rem; /* Icon sao và thư mục to tương xứng */
+            font-size: 1.25rem;
         }
 
-    /* 3. THƯ MỤC CON (Cấp 2) */
+    /* Màu sắc đặc trưng cho từng Tab */
+    .header-hub {
+        border-left-color: #0d6efd;
+    }
+
+    .header-static {
+        border-left-color: #198754;
+    }
+
     .child-item {
         background-color: #ffffff;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
-        margin-bottom: 15px; /* Các thư mục con cách xa nhau ra cho thoáng */
+        margin-bottom: 15px;
         margin-left: 25px;
         overflow: hidden;
     }
 
     .child-header {
         cursor: pointer;
-        padding: 14px 20px; /* Không gian bấm của mục con cũng rộng ra */
+        padding: 14px 20px;
         transition: background-color 0.2s;
-        font-size: 1.2rem; /* Chữ to lên */
+        font-size: 1.2rem;
     }
 
         .child-header:hover {
             background-color: #f8f9fa;
         }
 
-    /* Icon mũi tên xổ xuống to ra một chút */
     .toggle-icon-child {
         font-size: 1.1rem !important;
         margin-right: 12px !important;
     }
 
-    /* 4. RUỘT BÊN TRONG (Bài viết & Sidebar) */
     .child-content {
         background-color: #fdfdfd;
         border-top: 1px dashed #e0e0e0;
-        padding: 20px; /* Form ruột rộng rãi */
+        padding: 20px;
     }
 
     .content-box {
-        padding: 14px 18px; /* Thẻ chứa bài viết dày dặn hơn */
+        padding: 14px 18px;
         background-color: #ffffff;
         border: 1px dashed #ccc;
         border-radius: 6px;
-        font-size: 1.05rem; /* Chữ bên trong to dễ đọc */
+        font-size: 1.05rem;
         line-height: 1.6;
     }
 
-    /* 5. NÚT BẤM (Sửa bài, Tùy chọn) */
     .btn-xs {
-        padding: 0.35rem 0.6rem; /* Nút to ra dễ bấm chuột */
+        padding: 0.35rem 0.6rem;
         font-size: 0.95rem;
         border-radius: 5px;
         margin-top: -3px;
     }
 
-    .dropdown-toggle {
-        font-size: 1rem; /* Nút tùy chọn to lên */
-        padding: 0.3rem 0.8rem;
+    /* Custom Tabs */
+    .nav-pills .nav-link {
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 10px 20px;
+        border-radius: 8px;
     }
+
+        .nav-pills .nav-link.active {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 </style>
 
 <div class="container-fluid mt-4">
-    <div class="card shadow">
-        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Quản lý cấu trúc Thẻ MUCE CMS</h5>
-            <a asp-page="/Admin/Wizard/Step1_Menu" class="btn btn-sm btn-success">
-                <i class="fas fa-plus"></i> Thêm Thư mục gốc
+    <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0"><i class="fas fa-sitemap me-2"></i>Quản lý cấu trúc Thẻ MUCE CMS</h5>
+            <a asp-page="/Admin/Wizard/Step1_Menu" class="btn btn-sm btn-success fw-bold">
+                <i class="fas fa-plus"></i> Thêm Thư mục gốc mới
             </a>
         </div>
-        <div class="card-body">
-            <ul class="custom-tree">
-                @foreach (var folder in Model.TreeData)
-                {
-                    <li class="parent-item mt-3">
-                        <div class="folder-header d-flex justify-content-between align-items-center" onclick="toggleFolder(this)">
-                            <div>
-                                <i class="fas fa-star text-warning"></i>
-                                <i class="fas fa-folder folder-icon text-secondary"></i>
-                                <span class="fw-bold fs-5 ms-1">@folder.ParentMenu.Name</span>
-                            </div>
+        <div class="card-body bg-light">
 
-                            <div class="dropdown" onclick="event.stopPropagation();">
-                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-cog"></i> Tùy chọn
-                                </button>
-                                <ul class="dropdown-menu shadow">
-                                    <li><a class="dropdown-item text-primary" href="/Admin/NavigationMenus/Edit?id=@folder.ParentMenu.Id"><i class="fas fa-edit"></i> Sửa Menu gốc</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="/Admin/NavigationMenus/Delete?id=@folder.ParentMenu.Id"><i class="fas fa-trash"></i> Xóa</a></li>
-                                </ul>
-                            </div>
-                        </div>
+            <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+                <li class="nav-item me-2" role="presentation">
+                    <button class="nav-link active bg-white text-primary border border-primary" id="pills-hub-tab" data-bs-toggle="pill" data-bs-target="#pills-hub" type="button" role="tab">
+                        <i class="fas fa-folder-open me-2"></i>Quản lý Chuyên Mục (Hub)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link bg-white text-success border border-success" id="pills-static-tab" data-bs-toggle="pill" data-bs-target="#pills-static" type="button" role="tab">
+                        <i class="fas fa-file-alt me-2"></i>Quản lý Trang Tĩnh (Đơn)
+                    </button>
+                </li>
+            </ul>
 
-                        <ul class="child-list" style="display: none;">
+            <div class="tab-content" id="pills-tabContent">
 
-                            <div class="parent-content-box mb-4 p-3 shadow-sm" style="background-color: #f1f3f5; border-left: 4px solid #ffc107; border-radius: 6px; margin-left: 25px; margin-right: 20px; margin-top: 15px;">
-                                <h6 class="text-secondary fw-bold mb-3"><i class="fas fa-info-circle"></i> Nội dung của trang @folder.ParentMenu.Name:</h6>
+                <div class="tab-pane fade show active" id="pills-hub" role="tabpanel">
+                    <ul class="custom-tree">
+                        @if (!hubCategories.Any())
+                        {
+                            <div class="alert alert-info">Chưa có Chuyên mục nào.</div>
+                        }
+                        @foreach (var folder in hubCategories)
+                        {
+                            <li class="parent-item mt-3">
+                                <div class="folder-header header-hub d-flex justify-content-between align-items-center" onclick="toggleFolder(this)">
+                                    <div>
+                                        <i class="fas fa-folder folder-icon text-primary me-2"></i>
+                                        <span class="fw-bold fs-5 text-dark">@folder.ParentMenu.Name</span>
+                                    </div>
 
-                                <div class="content-box mb-3 shadow-sm">
-                                    <i class="fas fa-file-alt text-success"></i>
-                                    <strong>Bài viết chính:</strong> @folder.ArticleTitle
-                                    @if (folder.ArticleId.HasValue)
-                                    {
-                                        <a href="/Admin/ContentPages/Edit?id=@folder.ArticleId" class="btn btn-xs btn-outline-success float-end"><i class="fas fa-pen"></i> Sửa bài</a>
-                                    }
-                                    else
-                                    {
-                                        <a href="/Admin/ContentPages/Create" class="btn btn-xs btn-success float-end"><i class="fas fa-plus"></i> Tạo bài</a>
-                                    }
+                                    <div class="dropdown" onclick="window.event.stopPropagation();">
+                                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-cog"></i> Tùy chọn
+                                        </button>
+                                        <ul class="dropdown-menu shadow">
+                                            <li><a class="dropdown-item text-primary" href="/Admin/NavigationMenus/Edit?id=@folder.ParentMenu.Id"><i class="fas fa-edit"></i> Sửa tên Chuyên mục</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="/Admin/NavigationMenus/Delete?id=@folder.ParentMenu.Id"><i class="fas fa-trash"></i> Xóa</a></li>
+                                        </ul>
+                                    </div>
                                 </div>
 
-                                <div class="content-box shadow-sm">
-                                    <i class="fas fa-list-ul text-info"></i>
-                                    <strong>Sidebar chính:</strong> @folder.SidebarTitle
-                                    @if (folder.SidebarId.HasValue)
-                                    {
-                                        <a href="/Admin/SidebarItems/Edit?id=@folder.SidebarId" class="btn btn-xs btn-outline-info float-end"><i class="fas fa-pen"></i> Sửa Sidebar</a>
-                                    }
-                                </div>
-                            </div>
-                            @if (folder.ChildItems.Any())
-                            {
-                                foreach (var child in folder.ChildItems)
-                                {
-                                    <li class="child-item">
-                                        <div class="d-flex justify-content-between align-items-center child-header" onclick="toggleChildContent(this)">
-                                            <div>
-                                                <i class="fas fa-chevron-right me-2 text-muted toggle-icon-child"></i>
-                                                <i class="fas fa-folder text-info folder-icon-child"></i>
-                                                <span class="fw-bold ms-1">@child.ChildMenu.Name</span>
-                                            </div>
+                                <ul class="child-list" style="display: none;">
+                                    <li style="list-style: none;">
+                                        <div class="parent-content-box mb-4 p-3 shadow-sm" style="background-color: #f1f3f5; border-left: 4px solid #0d6efd; border-radius: 6px; margin-left: 25px; margin-right: 20px; margin-top: 15px;">
 
-                                            <div class="dropdown" onclick="event.stopPropagation();">
-                                                <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                                    <i class="fas fa-cog"></i> Tùy chọn
+                                            <div class="content-box mb-3 shadow-sm border-0">
+                                                <i class="fas fa-layer-group text-primary fs-5 align-middle me-2"></i>
+                                                <strong>Kho bài viết:</strong> Quản lý danh sách bài đăng của chuyên mục này
+
+                                                <a href="/Admin/ContentPages/Index?chuyenMucId=@folder.ParentMenu.ChuyenMucId" class="btn btn-xs btn-outline-primary float-end ms-2">
+                                                    <i class="fas fa-list"></i> Danh sách bài
+                                                </a>
+                                                <button type="button" data-url="/Admin/Trang/Create?menuId=@folder.ParentMenu.Id" class="btn btn-xs btn-primary float-end btn-open-modal">
+                                                    <i class="fas fa-plus"></i> Đăng bài mới
                                                 </button>
-                                                <ul class="dropdown-menu shadow">
-                                                    <li><a class="dropdown-item text-primary" href="/Admin/NavigationMenus/Edit?id=@child.ChildMenu.Id"><i class="fas fa-edit"></i> Sửa Menu này</a></li>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li><a class="dropdown-item text-danger" href="/Admin/NavigationMenus/Delete?id=@child.ChildMenu.Id"><i class="fas fa-trash"></i> Xóa</a></li>
-                                                </ul>
-                                            </div>
-                                        </div>
-
-                                        <div class="child-content" style="display: none;">
-                                            <div class="content-box">
-                                                <i class="fas fa-file-alt text-success"></i>
-                                                <strong>Bài viết:</strong> @child.ArticleTitle
-
-                                                @if (child.ArticleId.HasValue)
-                                                {
-                                                    <a href="/Admin/ContentPages/Edit?id=@child.ArticleId" class="btn btn-xs btn-outline-success float-end"><i class="fas fa-pen"></i> Sửa bài</a>
-                                                }
-                                                else
-                                                {
-                                                    <a href="/Admin/ContentPages/Create" class="btn btn-xs btn-success float-end"><i class="fas fa-plus"></i> Tạo bài</a>
-                                                }
                                             </div>
 
-                                            <div class="content-box mt-2">
-                                                <i class="fas fa-list-ul text-info"></i>
-                                                <strong>Sidebar:</strong> @child.SidebarTitle
-
-                                                @if (child.SidebarId.HasValue)
+                                            <div class="content-box shadow-sm border-0">
+                                                <i class="fas fa-list-ul text-info fs-5 align-middle me-2"></i>
+                                                <strong>Sidebar chuyên mục:</strong> @folder.SidebarTitle
+                                                @if (folder.SidebarId.HasValue)
                                                 {
-                                                    <a href="/Admin/SidebarItems/Edit?id=@child.SidebarId" class="btn btn-xs btn-outline-info float-end"><i class="fas fa-pen"></i> Sửa Sidebar</a>
+                                                    <a href="/Admin/SidebarItems/Edit?id=@folder.SidebarId" class="btn btn-xs btn-outline-info float-end"><i class="fas fa-pen"></i> Sửa Sidebar</a>
                                                 }
                                             </div>
                                         </div>
                                     </li>
-                                }
-                            }
-                            else
-                            {
-                                <li class="child-item">
-                                    <span class="text-muted fst-italic">Chưa có danh mục con nào...</span>
-                                </li>
-                            }
-                        </ul>
-                    </li>
-                }
-            </ul>
+
+                                    @if (folder.ChildItems.Any())
+                                    {
+                                        foreach (var child in folder.ChildItems)
+                                        {
+                                            <li class="child-item">
+                                                <div class="d-flex justify-content-between align-items-center child-header" onclick="toggleChildContent(this)">
+                                                    <div>
+                                                        <i class="fas fa-chevron-right me-2 text-muted toggle-icon-child"></i>
+                                                        <i class="fas fa-folder text-primary folder-icon-child me-1"></i>
+                                                        <span class="fw-bold ms-1 text-dark">@child.ChildMenu.Name</span>
+                                                    </div>
+                                                </div>
+                                                <div class="child-content" style="display: none;">
+                                                    <div class="content-box border-0" style="border-left: 4px solid #0d6efd; background-color: #f8fbff;">
+                                                        <i class="fas fa-layer-group text-primary me-2"></i>
+                                                        <strong>Kho bài viết con</strong>
+                                                        <a href="/Admin/ContentPages/Index?chuyenMucId=@child.ChildMenu.ChuyenMucId" class="btn btn-xs btn-outline-primary float-end ms-2"><i class="fas fa-list"></i> DS Bài</a>
+                                                        <button type="button" data-url="/Admin/Trang/Create?menuId=@child.ChildMenu.Id" class="btn btn-xs btn-primary float-end btn-open-modal">
+                                                            <i class="fas fa-plus"></i> Thêm mới
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <li class="child-item border-0 bg-transparent"><span class="text-muted fst-italic ms-3 mb-2 d-inline-block">Chưa có mục con...</span></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+                <div class="tab-pane fade" id="pills-static" role="tabpanel">
+                    <ul class="custom-tree">
+                        @if (!staticPages.Any())
+                        {
+                            <div class="alert alert-success">Chưa có Trang tĩnh nào.</div>
+                        }
+                        @foreach (var folder in staticPages)
+                        {
+                            <li class="parent-item mt-3">
+                                <div class="folder-header header-static d-flex justify-content-between align-items-center" onclick="toggleFolder(this)">
+                                    <div>
+                                        <i class="fas fa-file-alt text-success me-2"></i>
+                                        <span class="fw-bold fs-5 text-dark">@folder.ParentMenu.Name</span>
+                                    </div>
+
+                                    <div class="dropdown" onclick="window.event.stopPropagation();">
+                                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-cog"></i> Tùy chọn
+                                        </button>
+                                        <ul class="dropdown-menu shadow">
+                                            <li><a class="dropdown-item text-success" href="/Admin/NavigationMenus/Edit?id=@folder.ParentMenu.Id"><i class="fas fa-edit"></i> Sửa Menu gốc</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="/Admin/NavigationMenus/Delete?id=@folder.ParentMenu.Id"><i class="fas fa-trash"></i> Xóa</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <ul class="child-list" style="display: none;">
+                                    <li style="list-style: none;">
+                                        <div class="parent-content-box mb-4 p-3 shadow-sm" style="background-color: #f1f3f5; border-left: 4px solid #198754; border-radius: 6px; margin-left: 25px; margin-right: 20px; margin-top: 15px;">
+
+                                            <div class="content-box mb-3 shadow-sm border-0">
+                                                <i class="fas fa-file-alt text-success fs-5 align-middle me-2"></i>
+                                                <strong>Nội dung trang:</strong> @folder.ArticleTitle
+                                                @if (folder.ArticleId.HasValue)
+                                                {
+                                                    <a href="/Admin/ContentPages/Edit?id=@folder.ArticleId" class="btn btn-xs btn-outline-success float-end"><i class="fas fa-pen"></i> Sửa nội dung</a>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" data-url="/Admin/Trang/Create" class="btn btn-xs btn-success float-end btn-open-modal"><i class="fas fa-plus"></i> Tạo nội dung</button>
+                                                }
+                                            </div>
+
+                                            <div class="content-box shadow-sm border-0">
+                                                <i class="fas fa-list-ul text-info fs-5 align-middle me-2"></i>
+                                                <strong>Sidebar:</strong> @folder.SidebarTitle
+                                                @if (folder.SidebarId.HasValue)
+                                                {
+                                                    <a href="/Admin/SidebarItems/Edit?id=@folder.SidebarId" class="btn btn-xs btn-outline-info float-end"><i class="fas fa-pen"></i> Sửa Sidebar</a>
+                                                }
+                                            </div>
+                                        </div>
+                                    </li>
+
+                                    @if (folder.ChildItems.Any())
+                                    {
+                                        foreach (var child in folder.ChildItems)
+                                        {
+                                            <li class="child-item">
+                                                <div class="d-flex justify-content-between align-items-center child-header" onclick="toggleChildContent(this)">
+                                                    <div>
+                                                        <i class="fas fa-chevron-right me-2 text-muted toggle-icon-child"></i>
+                                                        <i class="fas fa-file-alt text-success me-1"></i>
+                                                        <span class="fw-bold ms-1 text-dark">@child.ChildMenu.Name</span>
+                                                    </div>
+                                                </div>
+                                                <div class="child-content" style="display: none;">
+                                                    <div class="content-box border-0">
+                                                        <i class="fas fa-file-alt text-success me-2"></i>
+                                                        <strong>Bài viết:</strong> @child.ArticleTitle
+                                                        @if (child.ArticleId.HasValue)
+                                                        {
+                                                            <a href="/Admin/ContentPages/Edit?id=@child.ArticleId" class="btn btn-xs btn-outline-success float-end"><i class="fas fa-pen"></i> Sửa bài</a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button type="button" data-url="/Admin/Trang/Create" class="btn btn-xs btn-success float-end btn-open-modal"><i class="fas fa-plus"></i> Tạo bài</button>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="dynamicModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content overflow-hidden border-0 shadow-lg" style="height: 90vh;">
+
+            <div class="modal-header bg-dark text-white py-2">
+                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-edit me-2"></i> Không gian Soạn thảo</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="reloadTrang()"></button>
+            </div>
+
+            <div class="modal-body p-0">
+                <iframe id="modalIframe" src="" style="width: 100%; height: 100%; border: none; background: #f0f2f5;"></iframe>
+            </div>
+
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // 1. Xử lý đóng/mở Thư mục gốc (Màu xám)
+        $(document).ready(function() {
+            // Giữ nguyên hiệu ứng đổi màu Tab của bác
+            $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
+                $('.nav-pills .nav-link').removeClass('bg-primary bg-success text-white').addClass('bg-white');
+                $('#pills-hub-tab').not('.active').addClass('text-primary');
+                $('#pills-static-tab').not('.active').addClass('text-success');
+
+                var activeTabId = $(e.target).attr('id');
+                if(activeTabId === 'pills-hub-tab') {
+                    $(e.target).removeClass('bg-white text-primary').addClass('bg-primary text-white');
+                } else {
+                    $(e.target).removeClass('bg-white text-success').addClass('bg-success text-white');
+                }
+            });
+            $('#pills-hub-tab').trigger('shown.bs.tab');
+
+            // -----------------------------------------------------
+            // 🌟 SỨC MẠNH IFRAME: MỞ MODAL ĐĂNG BÀI
+            // -----------------------------------------------------
+            $(document).on('click', '.btn-open-modal', function (e) {
+                e.preventDefault();
+
+                // Lấy đường dẫn url đang giấu trong nút bấm
+                var url = $(this).data('url');
+
+                // Bơm URL vào Iframe (nó sẽ tải form Create.cshtml một cách độc lập)
+                $('#modalIframe').attr('src', url);
+
+                // Mở màn Modal lên
+                var myModal = new bootstrap.Modal(document.getElementById('dynamicModal'));
+                myModal.show();
+            });
+        });
+
+        // -----------------------------------------------------
+        // 🌟 BÍ THUẬT LẮNG NGHE LỆNH TỪ BÊN TRONG IFRAME
+        // (Được gọi bởi window.parent.reloadTrang() trong C#)
+        // -----------------------------------------------------
+        function reloadTrang() {
+            // Dọn dẹp Iframe
+            $('#modalIframe').attr('src', '');
+
+            // F5 tải lại trang Customize để hiển thị bài viết vừa thêm
+            location.reload();
+        }
+
+        // -----------------------------------------------------
+        // XỬ LÝ ĐÓNG/MỞ CÂY THƯ MỤC (Giữ nguyên của bác)
+        // -----------------------------------------------------
         function toggleFolder(element) {
-            // Dùng jQuery để tìm phần tử
             var $childList = $(element).next('.child-list');
             var $icon = $(element).find('.folder-icon');
-
-            // Đổi Icon ngay lập tức để người dùng thấy web phản hồi tức thì
-            if ($childList.is(':visible')) {
-                $icon.removeClass('fa-folder-open').addClass('fa-folder');
-            } else {
-                $icon.removeClass('fa-folder').addClass('fa-folder-open');
+            if ($icon.length > 0) {
+                if ($childList.is(':visible')) {
+                    $icon.removeClass('fa-folder-open').addClass('fa-folder');
+                } else {
+                    $icon.removeClass('fa-folder').addClass('fa-folder-open');
+                }
             }
-
-            // Tạo hiệu ứng trượt mượt mà trong 250 mili-giây
             $childList.slideToggle(250);
         }
 
-        // 2. Xử lý đóng/mở Thư mục con (Màu xanh/trắng)
         function toggleChildContent(element) {
             var $content = $(element).next('.child-content');
             var $toggleIcon = $(element).find('.toggle-icon-child');
             var $folderIcon = $(element).find('.folder-icon-child');
-
-            // Đổi Icon tức thì
             if ($content.is(':visible')) {
                 $toggleIcon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
-                $folderIcon.removeClass('fa-folder-open').addClass('fa-folder');
+                if ($folderIcon.length > 0) $folderIcon.removeClass('fa-folder-open').addClass('fa-folder');
             } else {
                 $toggleIcon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
-                $folderIcon.removeClass('fa-folder').addClass('fa-folder-open');
+                if ($folderIcon.length > 0) $folderIcon.removeClass('fa-folder').addClass('fa-folder-open');
             }
-
-            // Tạo hiệu ứng trượt êm ái
             $content.slideToggle(250);
         }
     </script>
