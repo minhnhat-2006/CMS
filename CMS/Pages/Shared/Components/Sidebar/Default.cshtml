@@ -59,45 +59,71 @@
         }
 </style>
 
-@if (Model != null && Model.Any())
-{
-    // Lấy cái Vỏ (Cấu hình) từ ViewData mà ViewComponent vừa ném ra
+@{
+    // 1. Lấy cấu hình Sidebar từ ViewData
     var config = ViewData["SidebarConfig"] as SidebarItem;
 
-    // Ưu tiên lấy Title của cấu hình, nếu không có thì lấy Category của bài viết đầu tiên
-    var title = config?.Title ?? (Model.First().Category ?? "Thông tin nổi bật");
+    // 2. LOGIC TIÊU ĐỀ AN TOÀN (Dùng FirstOrDefault thay vì First để không bị crash)
+    var firstArticle = Model?.FirstOrDefault();
+    var title = config?.Title
+                ?? firstArticle?.Category
+                ?? "Thông tin liên quan";
+}
 
-    <div class="sidebar-wrapper">
-        <div class="sidebar-widget">
+@* SIDEBAR PHẢI LUÔN HIỆN (Dù có bài viết hay không, để còn hiện nội dung tĩnh) *@
+<div class="sidebar-wrapper">
+    <div class="sidebar-widget">
 
-            @* 1. TIÊU ĐỀ SIDEBAR *@
-            <div class="sidebar-header">
-                <i class="bi bi-list-ul me-2"></i> @title
-            </div>
+        @* 1. TIÊU ĐỀ SIDEBAR *@
+        <div class="sidebar-header">
+            <i class="bi bi-list-ul me-2"></i> @title
+        </div>
 
-            @* 2. DANH SÁCH BÀI VIẾT (Tự động lặp 100% không trượt phát nào) *@
+        @* 2. DANH SÁCH BÀI VIẾT (Chỉ hiện nếu có bài) *@
+        @if (Model != null && Model.Any())
+        {
             <div>
                 @foreach (var article in Model)
                 {
-                    // Tự động tạo link nội bộ.
-                    // 🔥 QUAN TRỌNG: Sửa chữ "/PageDetail" thành tên file Razor Page hiển thị bài viết thực tế của bạn
-                    <a asp-page="/PageDetail"
-                       asp-route-id="@article.Id"
-                       class="sidebar-item">
+                    string articleUrl = "";
+
+                    // Cơ chế URL 2 cửa:
+                    // Nếu không có Category -> Là Trang tĩnh (1-1)
+                    if (string.IsNullOrEmpty(article.Category))
+                    {
+                        articleUrl = $"/bai-viet/{article.Id}/{article.Slug}";
+                    }
+                    // Nếu có Category -> Là Chuyên mục (1-N)
+                    else
+                    {
+                        articleUrl = $"/{article.Category}/{article.Slug}";
+                    }
+
+                    // Lưới lọc cuối cùng: Quét sạch double slash (vd: /tt//dt -> /tt/dt)
+                    articleUrl = articleUrl.Replace("//", "/");
+
+                    <a href="@articleUrl" class="sidebar-item">
                         <i class="bi bi-caret-right-fill"></i>
                         @article.Title
                     </a>
                 }
             </div>
+        }
 
-            @* 3. HIỂN THỊ NỘI DUNG TĨNH (Nếu Admin có cấu hình chèn HTML, Banner...) *@
-            @if (config != null && !string.IsNullOrEmpty(config.Content))
-            {
-                <div class="sidebar-content-block">
-                    @Html.Raw(config.Content)
-                </div>
-            }
+        @* 3. HIỂN THỊ NỘI DUNG TĨNH (Banner, HTML tự do...) *@
+        @if (config != null && !string.IsNullOrEmpty(config.Content))
+        {
+            <div class="sidebar-content-block">
+                @Html.Raw(config.Content)
+            </div>
+        }
+        else if (Model == null || !Model.Any())
+        {
+            @* Nếu cả bài viết và nội dung tĩnh đều không có, hiện một thông báo nhẹ *@
+            <div class="sidebar-content-block text-muted fst-italic">
+                Không có dữ liệu bổ sung.
+            </div>
+        }
 
-        </div>
     </div>
-}
+</div>
