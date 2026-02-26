@@ -1,8 +1,14 @@
 ﻿using CMS.Data;
 using CMS.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
+using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace CMS.Pages.Admin.Wizard
@@ -10,16 +16,17 @@ namespace CMS.Pages.Admin.Wizard
     public class Step2_ArticleModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public Step2_ArticleModel(ApplicationDbContext context)
+        public Step2_ArticleModel(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         [BindProperty]
         public ContentPage ContentPage { get; set; } = new ContentPage();
 
-        // Két sắt giữ ID của Menu từ Bước 1 truyền sang
         [BindProperty]
         public int TargetMenuId { get; set; }
 
@@ -30,7 +37,7 @@ namespace CMS.Pages.Admin.Wizard
             if (menuId <= 0) return RedirectToPage("./Step1_Menu");
 
             var currentMenu = await _context.NavigationMenus
-                .AsNoTracking() // Dùng AsNoTracking ở Get vì chỉ để hiển thị
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == menuId);
 
             if (currentMenu == null) return RedirectToPage("./Step1_Menu");
@@ -38,12 +45,8 @@ namespace CMS.Pages.Admin.Wizard
             TargetMenuId = currentMenu.Id;
             MenuName = currentMenu.Name;
 
-            // Khởi tạo các giá trị mặc định cho form
             ContentPage.IsVisible = true;
             ContentPage.HasSidebar = true;
-
-            // ĐÃ SỬA: Lấy trực tiếp tên của Menu hiện tại làm Category 
-            // (Không dùng hàm GetRootCategoryNameAsync nữa để tránh nhận diện nhầm thành menu Cha)
             ContentPage.Category = currentMenu.Name;
 
             return Page();
@@ -54,45 +57,67 @@ namespace CMS.Pages.Admin.Wizard
             ModelState.Remove("ContentPage.SidebarItems");
 
             if (!ModelState.IsValid)
-            {
                 return Page();
-            }
 
-            // Phải dùng tracking ở đây để EF theo dõi sự thay đổi
             var currentMenu = await _context.NavigationMenus.FindAsync(TargetMenuId);
             if (currentMenu == null) return Page();
 
-            // ĐÃ SỬA: Chốt chặn cuối cùng: Ép buộc Category là tên của Menu hiện tại từ server
             ContentPage.Category = currentMenu.Name;
-
-            // ==================================================================
-            // 🔥 ĐIỂM CHỐT HẠ: Truyền ChuyenMucId từ Menu sang thẳng Bài viết
-            // ==================================================================
             ContentPage.ChuyenMucId = currentMenu.ChuyenMucId;
 
-            // ==================================================================
-            // 🔥 TRANSACTION: Đảm bảo "Sống cùng sống, chết cùng chết"
-            // ==================================================================
+            // ✅ Xử lý upload thumbnail - tự động resize & nén
+            if (ContentPage.ThumbnailFile != null && ContentPage.ThumbnailFile.Length > 0)
+            {
+                var file = ContentPage.ThumbnailFile;
+
+                // Chỉ kiểm tra có phải ảnh không, không giới hạn dung lượng
+                var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+                if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                {
+                    ModelState.AddModelError("", "Chỉ chấp nhận file ảnh JPG, PNG, WEBP, GIF.");
+                    return Page();
+                }
+
+                var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "thumbnails");
+                Directory.CreateDirectory(uploadsFolder);
+
+                var fileName = $"{Guid.NewGuid()}.jpg";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var image = await Image.LoadAsync(file.OpenReadStream()))
+                {
+                    // Resize thông minh: chỉ thu nhỏ nếu ảnh quá lớn, không phóng to ảnh nhỏ
+                    if (image.Width > 1280 || image.Height > 720)
+                    {
+                        image.Mutate(x => x.Resize(new ResizeOptions
+                        {
+                            Size = new Size(1280, 720),
+                            Mode = ResizeMode.Max // Giữ tỉ lệ gốc, không crop
+                        }));
+                    }
+
+                    // Lưu ra JPEG chất lượng 85%
+                    await image.SaveAsJpegAsync(filePath, new JpegEncoder { Quality = 85 });
+                }
+
+                ContentPage.Thumbnail = $"/uploads/thumbnails/{fileName}";
+            }
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Lưu bài viết (Lúc này bài viết đã có sẵn ChuyenMucId không bao giờ null)
                 _context.ContentPages.Add(ContentPage);
-                await _context.SaveChangesAsync(); // Sau dòng này, ContentPage.Id có giá trị thực
-
-                // 2. NỐI TƠ HỒNG: Gắn Bài Viết vào Menu
-                currentMenu.ContentPageId = ContentPage.Id;
-                // Không cần _context.NavigationMenus.Update() vì currentMenu đang được tracking
                 await _context.SaveChangesAsync();
 
-                // 3. Chốt giao dịch thành công
+                currentMenu.ContentPageId = ContentPage.Id;
+                await _context.SaveChangesAsync();
+
                 await transaction.CommitAsync();
 
                 return RedirectToPage("./Step3_Sidebar", new { id = ContentPage.Id });
             }
             catch
             {
-                // Nếu có bất kỳ lỗi gì xảy ra, Rollback lại toàn bộ, không tạo ra dữ liệu rác
                 await transaction.RollbackAsync();
                 ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi lưu dữ liệu. Vui lòng thử lại.");
                 return Page();

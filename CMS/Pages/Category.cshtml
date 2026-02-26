@@ -37,13 +37,14 @@
         }
 
     .btn-hub {
-        border: 1px solid #B3000F;
+        border: 2px solid #B3000F;
         color: #B3000F;
         background: transparent;
         transition: all 0.2s;
+        border-radius: 4px;
     }
 
-        .btn-hub:hover {
+        .btn-hub:hover, .btn-hub.active {
             background-color: #B3000F;
             color: #ffffff;
         }
@@ -71,6 +72,70 @@
         padding-bottom: 20px;
         margin-bottom: 20px;
     }
+
+    .hust-card {
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+        background: #fff;
+        transition: box-shadow 0.2s, transform 0.2s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .hust-card:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            transform: translateY(-3px);
+        }
+
+    .hust-card-thumb {
+        width: 100%;
+        height: 200px;
+        background-size: cover;
+        background-position: top center;
+        background-repeat: no-repeat;
+        background-color: #e9ecef;
+        flex-shrink: 0;
+    }
+
+    .hust-card-body {
+        padding: 14px 16px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .hust-card-title {
+        font-size: 0.97rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        text-decoration: none;
+        line-height: 1.45;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+        .hust-card-title:hover {
+            color: #B3000F;
+        }
+
+    .hust-card-meta {
+        font-size: 0.82rem;
+        color: #888;
+        margin-top: auto;
+        padding-top: 10px;
+    }
+
+    .hust-card-col {
+        transition: opacity 0.2s;
+    }
+
+        .hust-card-col.hidden {
+            display: none;
+        }
 </style>
 
 <div class="container py-4 mb-5">
@@ -93,14 +158,18 @@
 
     @if (isHub && Model.SidebarMenus != null)
     {
-        <div class="row mb-5 mt-2">
+        <div class="row mb-4 mt-2">
             <div class="col-12 d-flex gap-2 flex-wrap">
+                
+                <button class="btn btn-hub fw-bold px-4 active" onclick="filterCategory(this, 'all')">
+                    TẤT CẢ
+                </button>
+              
                 @foreach (var child in Model.SidebarMenus)
                 {
-                    string childUrl = ("/" + child.Url).Replace("//", "/");
-                    <a href="@childUrl" class="btn btn-hub fw-bold px-4 rounded-0">
+                    <button class="btn btn-hub fw-bold px-4" onclick="filterCategory(this, '@child.Name')">
                         @child.Name.ToUpper()
-                    </a>
+                    </button>
                 }
             </div>
         </div>
@@ -126,7 +195,7 @@
         <div class="@(isHub ? "col-12" : "col-lg-9")">
             @if (Model.Articles != null && Model.Articles.Any())
             {
-                <div class="@(isHub ? "row row-cols-1 row-cols-md-3 g-4" : "")">
+                <div class="@(isHub ? "row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4" : "")" id="articlesGrid">
                     @foreach (var item in Model.Articles)
                     {
                         var thumbUrl = string.IsNullOrEmpty(item.Thumbnail)
@@ -135,23 +204,24 @@
 
                         if (isHub)
                         {
-                            <div class="col">
-                                <div class="card h-100 border-0 bg-transparent">
-                                    <a href="/bai-viet/@item.Id" style="display: block;">
-                                        <div style="height: 200px; border-radius: 4px; background: url('@thumbUrl') top center / cover no-repeat #f0f0f0;">
+                            <div class="col hust-card-col" data-category="@item.Category">
+                                <a href="/bai-viet/@item.Id" style="text-decoration: none;">
+                                    <div class="hust-card">
+                                        <div class="hust-card-thumb"
+                                             style="background-image: url('@thumbUrl');">
                                         </div>
-                                    </a>
-                                    <div class="card-body px-0 py-0 mt-3">
-                                        <a href="/bai-viet/@item.Id" class="article-title fs-5 d-block">@item.Title</a>
-                                        <div class="article-meta">
-                                            <span><i class="bi bi-clock me-1"></i> @item.CreatedAt.ToString("dd/MM/yyyy")</span>
-                                            @if (item.ViewCount > 0)
-                                            {
-                                                <span class="ms-3"><i class="bi bi-eye me-1"></i> @item.ViewCount</span>
-                                            }
+                                        <div class="hust-card-body">
+                                            <span class="hust-card-title">@item.Title</span>
+                                            <div class="hust-card-meta">
+                                                @item.CreatedAt.ToString("dd/MM/yyyy")
+                                                @if (item.ViewCount > 0)
+                                                {
+                                                    <span class="ms-2">· @item.ViewCount lượt xem</span>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                         }
                         else
@@ -190,3 +260,20 @@
         </div>
     </div>
 </div>
+
+<script>
+    function filterCategory(btn, category) {
+        // Cập nhật trạng thái active cho nút
+        document.querySelectorAll('.btn-hub').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Lọc bài viết
+        document.querySelectorAll('.hust-card-col').forEach(card => {
+            if (category === 'all' || card.dataset.category === category) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+</script>
