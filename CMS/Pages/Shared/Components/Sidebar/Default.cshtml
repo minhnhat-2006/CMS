@@ -60,47 +60,48 @@
 </style>
 
 @{
-    // 1. Lấy cấu hình Sidebar từ ViewData
     var config = ViewData["SidebarConfig"] as SidebarItem;
-
-    // 2. LOGIC TIÊU ĐỀ AN TOÀN (Dùng FirstOrDefault thay vì First để không bị crash)
     var firstArticle = Model?.FirstOrDefault();
-    var title = config?.Title
-                ?? firstArticle?.Category
-                ?? "Thông tin liên quan";
+    var title = config?.Title ?? firstArticle?.Category ?? "Thông tin liên quan";
+
+    // 🔥 BẮT LẤY CỜ TỪ C#
+    bool isStaticType = ViewData["IsStaticType"] as bool? ?? false;
 }
 
-@* SIDEBAR PHẢI LUÔN HIỆN (Dù có bài viết hay không, để còn hiện nội dung tĩnh) *@
 <div class="sidebar-wrapper">
     <div class="sidebar-widget">
-
-        @* 1. TIÊU ĐỀ SIDEBAR *@
         <div class="sidebar-header">
             <i class="bi bi-list-ul me-2"></i> @title
         </div>
 
-        @* 2. DANH SÁCH BÀI VIẾT (Chỉ hiện nếu có bài) *@
         @if (Model != null && Model.Any())
         {
             <div>
                 @foreach (var article in Model)
                 {
                     string articleUrl = "";
+                    string cat = (article.Category ?? "").Trim('/');
+                    string slg = (article.Slug ?? "").Trim('/');
 
-                    // Cơ chế URL 2 cửa:
-                    // Nếu không có Category -> Là Trang tĩnh (1-1)
-                    if (string.IsNullOrEmpty(article.Category))
+                    // CHIA 2 LUỒNG CHÍNH XÁC 100%
+                    if (isStaticType)
                     {
-                        articleUrl = $"/bai-viet/{article.Id}/{article.Slug}";
+                        // 1. Luồng 1-1 (Link: /bai-viet/Id/Slug)
+                        articleUrl = $"/bai-viet/{article.Id}/{slg}";
                     }
-                    // Nếu có Category -> Là Chuyên mục (1-N)
                     else
                     {
-                        articleUrl = $"/{article.Category}/{article.Slug}";
+                        // 2. Luồng 1-N (Link: /Category/Slug)
+                        // Máy lọc rác: Nếu Slug có chứa luôn tên cha thì gọt đi
+                        if (slg.StartsWith(cat + "/"))
+                        {
+                            slg = slg.Substring(cat.Length + 1);
+                        }
+                        articleUrl = $"/{cat}/{slg}";
                     }
 
-                    // Lưới lọc cuối cùng: Quét sạch double slash (vd: /tt//dt -> /tt/dt)
-                    articleUrl = articleUrl.Replace("//", "/");
+                    // Ép đúng chuẩn 1 gạch chéo
+                    articleUrl = ("/" + articleUrl).Replace("//", "/");
 
                     <a href="@articleUrl" class="sidebar-item">
                         <i class="bi bi-caret-right-fill"></i>
@@ -110,7 +111,6 @@
             </div>
         }
 
-        @* 3. HIỂN THỊ NỘI DUNG TĨNH (Banner, HTML tự do...) *@
         @if (config != null && !string.IsNullOrEmpty(config.Content))
         {
             <div class="sidebar-content-block">
@@ -119,11 +119,9 @@
         }
         else if (Model == null || !Model.Any())
         {
-            @* Nếu cả bài viết và nội dung tĩnh đều không có, hiện một thông báo nhẹ *@
             <div class="sidebar-content-block text-muted fst-italic">
                 Không có dữ liệu bổ sung.
             </div>
         }
-
     </div>
 </div>

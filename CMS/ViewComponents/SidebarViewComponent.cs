@@ -22,7 +22,6 @@ namespace CMS.ViewComponents
             SidebarItem sidebarConfig = null;
             var relatedArticles = new List<ContentPage>();
 
-            // Tự động lấy ID từ URL nếu không truyền vào
             if (!contentPageId.HasValue)
             {
                 var routeId = ViewContext.RouteData.Values["id"]?.ToString();
@@ -30,62 +29,36 @@ namespace CMS.ViewComponents
             }
 
             // ==========================================================
-            // KỊCH BẢN 1: TRANG TĨNH (1-1) - Gom cả Cha lẫn Con
+            // KỊCH BẢN 1: TRANG TĨNH (1-1) 
             // ==========================================================
             if (contentPageId.HasValue)
             {
                 int pageId = contentPageId.Value;
-
-                var currentMenu = await _context.NavigationMenus
-                    .FirstOrDefaultAsync(m => m.ContentPageId == pageId);
+                var currentMenu = await _context.NavigationMenus.FirstOrDefaultAsync(m => m.ContentPageId == pageId);
 
                 if (currentMenu != null)
                 {
-                    // Lấy ID của Menu cha
                     int parentId = currentMenu.ParentId ?? currentMenu.Id;
-
-                    // Kéo thông tin thằng Cha lên
-                    var parentMenu = await _context.NavigationMenus
-                        .Include(m => m.LinkedPage)
-                        .FirstOrDefaultAsync(m => m.Id == parentId);
+                    var parentMenu = await _context.NavigationMenus.Include(m => m.LinkedPage).FirstOrDefaultAsync(m => m.Id == parentId);
 
                     if (parentMenu != null)
                     {
-                        // 1. TÌM VỎ SIDEBAR (Quét lưới rộng: Tìm theo ID bài viết, theo Category hoặc theo Tên)
-                        sidebarConfig = await _context.SidebarItems
-                            .AsNoTracking()
-                            .FirstOrDefaultAsync(x =>
-                                (x.ContentPageId == parentMenu.ContentPageId ||
-                                 x.Category == parentMenu.Name ||
-                                 x.Title == parentMenu.Name)
-                                && x.IsVisible);
+                        sidebarConfig = await _context.SidebarItems.AsNoTracking()
+                            .FirstOrDefaultAsync(x => (x.ContentPageId == parentMenu.ContentPageId || x.Category == parentMenu.Name || x.Title == parentMenu.Name) && x.IsVisible);
 
-                        // 2. GOM RUỘT (CẢ CHA LẪN CON)
                         var allMenusForSidebar = new List<NavigationMenu>();
+                        if (parentMenu.ContentPageId != null && parentMenu.IsVisible) allMenusForSidebar.Add(parentMenu);
 
-                        // 👉 Mời Cha vào danh sách trước (Ví dụ: Giới thiệu chung)
-                        if (parentMenu.ContentPageId != null && parentMenu.IsVisible)
-                        {
-                            allMenusForSidebar.Add(parentMenu);
-                        }
-
-                        // 👉 Kéo bầy Con vào theo sau (Ví dụ: cc, ls)
-                        var siblingMenus = await _context.NavigationMenus
-                            .Include(m => m.LinkedPage)
-                            .Where(m => m.ParentId == parentId && m.ContentPageId != null && m.IsVisible)
-                            .OrderBy(m => m.DisplayOrder)
-                            .ToListAsync();
+                        var siblingMenus = await _context.NavigationMenus.Include(m => m.LinkedPage)
+                            .Where(m => m.ParentId == parentId && m.ContentPageId != null && m.IsVisible).OrderBy(m => m.DisplayOrder).ToListAsync();
 
                         allMenusForSidebar.AddRange(siblingMenus);
-
-                        // Trích xuất bài viết từ Menu để đưa ra giao diện
-                        relatedArticles = allMenusForSidebar
-                            .Where(m => m.LinkedPage != null)
-                            .Select(m => m.LinkedPage)
-                            .ToList();
+                        relatedArticles = allMenusForSidebar.Where(m => m.LinkedPage != null).Select(m => m.LinkedPage).ToList();
                     }
 
                     ViewData["SidebarConfig"] = sidebarConfig;
+                    // 🔥 BẬT CỜ: ĐÂY LÀ TRANG 1-1
+                    ViewData["IsStaticType"] = true;
                     return View(relatedArticles);
                 }
             }
@@ -95,18 +68,14 @@ namespace CMS.ViewComponents
             // ==========================================================
             if (!string.IsNullOrEmpty(currentCategory))
             {
-                sidebarConfig = await _context.SidebarItems
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.Category == currentCategory && x.IsVisible);
-
-                relatedArticles = await _context.ContentPages
-                    .AsNoTracking()
-                    .Where(x => x.Category == currentCategory && x.IsVisible)
-                    .OrderByDescending(x => x.Id)
-                    .ToListAsync();
+                sidebarConfig = await _context.SidebarItems.AsNoTracking().FirstOrDefaultAsync(x => x.Category == currentCategory && x.IsVisible);
+                relatedArticles = await _context.ContentPages.AsNoTracking()
+                    .Where(x => x.Category == currentCategory && x.IsVisible).OrderByDescending(x => x.Id).ToListAsync();
             }
 
             ViewData["SidebarConfig"] = sidebarConfig;
+            // 🔥 TẮT CỜ: ĐÂY LÀ TRANG 1-N
+            ViewData["IsStaticType"] = false;
             return View(relatedArticles);
         }
     }
