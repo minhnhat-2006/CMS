@@ -1,8 +1,11 @@
 ﻿@page
 @model CMS.Pages.Trang.IndexModel
 @{
-    // TẮT LAYOUT ĐỂ NHÚNG VÀO IFRAME CHO ĐẸP
-    Layout = null;
+    // Giữ popup rỗng nếu có tham số layout
+    if (Model.Layout == "popup" || HttpContext.Request.Query["layout"] == "popup")
+    {
+        Layout = null;
+    }
 }
 
 <!DOCTYPE html>
@@ -29,16 +32,41 @@
 </head>
 <body>
     <div class="table-wrapper">
-        <h5 class="mb-4 text-primary fw-bold">Danh sách bài viết trong chuyên mục</h5>
+        <h5 class="text-primary fw-bold mb-3">Quản lý bài viết</h5>
+
+        <form method="get" class="row g-2 mb-4">
+            <input type="hidden" name="layout" value="@(Model.Layout ?? HttpContext.Request.Query["layout"])" />
+
+            <div class="col-md-4">
+                <select asp-for="Category" asp-items="@(ViewData["CategoryList"] as SelectList)" class="form-select fw-bold text-primary" onchange="this.form.submit()">
+                    <option value="">-- Tất cả chuyên mục --</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" asp-for="SearchTerm" class="form-control" placeholder="Nhập tiêu đề hoặc nội dung cần tìm..." />
+                    <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Tìm kiếm</button>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.SearchTerm))
+            {
+                <div class="col-md-2">
+                    <a href="?category=@Model.Category&layout=@(Model.Layout ?? HttpContext.Request.Query["layout"])" class="btn btn-outline-secondary w-100">Xóa lọc</a>
+                </div>
+            }
+        </form>
 
         @if (Model.ContentPageList.Any())
         {
-            <table class="table table-hover table-bordered">
+            <table class="table table-hover table-bordered align-middle">
                 <thead class="table-light">
                     <tr>
                         <th width="50">ID</th>
                         <th>Tiêu đề bài viết</th>
-                        <th width="150">Ngày tạo</th>
+                        <th width="150">Chuyên mục</th>
+                        <th width="120">Ngày tạo</th>
                         <th width="100">Trạng thái</th>
                         <th width="120">Thao tác</th>
                     </tr>
@@ -49,6 +77,7 @@
                         <tr>
                             <td>@item.Id</td>
                             <td class="fw-bold">@item.Title</td>
+                            <td><span class="badge bg-info text-dark">@item.Category</span></td>
                             <td>@item.CreatedAt.ToString("dd/MM/yyyy")</td>
                             <td>
                                 @if (item.IsVisible)
@@ -60,9 +89,9 @@
                                     <span class="badge bg-secondary">Đã ẩn</span>
                                 }
                             </td>
-                            <td class="text-nowrap">
-                                <a href="/Admin/Trang/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i> Sửa</a>
-                                <a href="/Admin/Trang/Delete?id=@item.Id" class="btn btn-sm btn-outline-danger ms-1"><i class="fas fa-trash"></i> Xóa</a>
+                            <td>
+                                <a href="/Admin/Trang/Edit?id=@item.Id&layout=popup" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                <a href="/Admin/Trang/Delete?id=@item.Id&layout=popup" class="btn btn-sm btn-outline-danger ms-1"><i class="fas fa-trash"></i></a>
                             </td>
                         </tr>
                     }
@@ -72,7 +101,7 @@
         else
         {
             <div class="alert alert-warning text-center">
-                Chuyên mục này hiện chưa có bài viết nào.
+                Không tìm thấy bài viết nào phù hợp.
             </div>
         }
     </div>
