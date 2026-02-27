@@ -2,7 +2,6 @@
 using CMS.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
@@ -26,14 +25,8 @@ namespace CMS.Pages.Trang
         [BindProperty]
         public int? TargetMenuId { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(int? menuId)
+        public IActionResult OnGet(int? menuId) // Đổi thành IActionResult đồng bộ cho nhẹ, vì không query DB nữa
         {
-            var menus = await _context.NavigationMenus
-                                      .OrderBy(m => m.DisplayOrder)
-                                      .ToListAsync();
-
-            ViewData["CategoryList"] = new SelectList(menus, "Id", "Name", menuId);
-
             ContentPageItem.IsVisible = true;
             ContentPageItem.HasSidebar = true;
 
@@ -64,7 +57,6 @@ namespace CMS.Pages.Trang
             {
                 var file = ContentPageItem.ThumbnailFile;
 
-                // Validate loại file
                 var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
                 if (!allowedTypes.Contains(file.ContentType.ToLower()))
                 {
@@ -72,18 +64,15 @@ namespace CMS.Pages.Trang
                     return Content(scriptTypeErr, "text/html");
                 }
 
-                // Validate dung lượng (5MB)
                 if (file.Length > 5 * 1024 * 1024)
                 {
                     string scriptSizeErr = "<script>alert('Ảnh vượt quá 5MB! Vui lòng chọn ảnh nhỏ hơn.'); history.back();</script>";
                     return Content(scriptSizeErr, "text/html");
                 }
 
-                // Tạo thư mục nếu chưa có
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "thumbnails");
                 Directory.CreateDirectory(uploadsFolder);
 
-                // Tên file unique
                 var ext = Path.GetExtension(file.FileName).ToLower();
                 var fileName = $"{Guid.NewGuid()}{ext}";
                 var filePath = Path.Combine(uploadsFolder, fileName);
@@ -96,7 +85,7 @@ namespace CMS.Pages.Trang
                 ContentPageItem.Thumbnail = $"/uploads/thumbnails/{fileName}";
             }
 
-            // Móc nối dữ liệu với Menu
+            // Móc nối dữ liệu với Menu (Tự động gán theo TargetMenuId)
             if (TargetMenuId.HasValue)
             {
                 var targetMenu = await _context.NavigationMenus.FindAsync(TargetMenuId.Value);

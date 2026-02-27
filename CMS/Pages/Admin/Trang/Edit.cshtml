@@ -2,84 +2,179 @@
 @model CMS.Pages.Trang.EditModel
 @{
     ViewData["Title"] = "Chỉnh sửa bài viết";
+
+    // Tắt hoàn toàn Layout, giống hệt trang Create
+    Layout = null;
 }
 
-<style>
-    /* ... (CSS cũ của bạn) ... */
-</style>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
 
-<div class="container-fluid mt-4 px-4">
-    <form method="post">
-        <input type="hidden" asp-for="ContentPageItem.Id" />
-        <input type="hidden" asp-for="ContentPageItem.CreatedAt" /> <div class="row g-4">
-            <div class="col-12 col-lg-9">
-                <div class="d-flex justify-content-center">
-                    <div class="w-100" style="max-width: 1100px;">
-                        <div class="word-paper">
-                            <div class="text-uppercase text-muted fw-bold small mb-3">Nội dung văn bản</div>
-                            <textarea asp-for="ContentPageItem.Content" id="editor"></textarea>
-                            <span asp-validation-for="ContentPageItem.Content" class="text-danger small"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-            <div class="col-12 col-lg-3">
-                <div class="sticky-top" style="top: 20px; z-index: 1000;">
-                    <button type="submit" class="btn btn-success w-100 py-3 mb-3 fw-bold shadow-sm rounded-3">
-                        <i class="bi bi-check-circle-fill me-2"></i> Cập nhật bài viết
-                    </button>
-                    <a asp-page="Index" class="btn btn-light w-100 mb-4 text-muted border-0 rounded-3">Hủy bỏ</a>
+    <style>
+        body {
+            background-color: #f0f2f5;
+        }
 
-                    <div class="bg-white p-4 shadow-sm rounded-4">
-                        <h6 class="fw-bold mb-3">Thông tin bài viết</h6>
+        .word-paper {
+            background: white;
+            min-height: 1000px;
+            padding: 60px 80px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 50px;
+        }
 
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Chuyên mục</label>
+        .tox-tinymce {
+            border: none !important;
+            box-shadow: none !important;
+        }
 
-                            <select asp-for="ContentPageItem.Category"
-                                    asp-items="@(ViewData["CategoryList"] as SelectList)"
-                                    class="form-select bg-light border-0 p-3">
-                                <option value="">-- Chọn chuyên mục --</option>
-                            </select>
+        .tox-editor-header {
+            border-bottom: 1px solid #f0f0f0 !important;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            background: white;
+        }
 
-                            <span asp-validation-for="ContentPageItem.Category" class="text-danger small"></span>
-                        </div>
+        .tox-statusbar, .tox-promotion {
+            display: none !important;
+        }
 
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Tiêu đề</label>
-                            <textarea asp-for="ContentPageItem.Title" id="txtTitle" class="form-control bg-light border-0 p-3" rows="3"></textarea>
-                            <span asp-validation-for="ContentPageItem.Title" class="text-danger small"></span>
-                        </div>
+        .quote-classic {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-style: italic;
+        }
 
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Slug (URL)</label>
-                            <div class="input-group">
-                                <input asp-for="ContentPageItem.Slug" id="txtSlug" class="form-control bg-light border-0 text-muted" readonly />
-                                <button class="btn btn-outline-secondary border-0" type="button" id="btnRegenSlug" title="Tạo lại Slug">
-                                    <i class="bi bi-arrow-clockwise"></i>
-                                </button>
+        .quote-author {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid mt-4 px-4">
+        <form method="post" enctype="multipart/form-data">
+
+            <input type="hidden" asp-for="ContentPageItem.Id" />
+            <input type="hidden" asp-for="ContentPageItem.CreatedAt" />
+            <input type="hidden" asp-for="ContentPageItem.Category" />
+            <input type="hidden" asp-for="ContentPageItem.ChuyenMucId" />
+            <input type="hidden" asp-for="ContentPageItem.Thumbnail" />
+
+            <div class="row g-4">
+                <div class="col-12 col-lg-9">
+                    <div class="d-flex justify-content-center">
+                        <div class="w-100" style="max-width: 1100px;">
+                            <div class="word-paper">
+                                <div class="text-uppercase text-muted fw-bold small mb-3">Nội dung văn bản</div>
+                                <textarea asp-for="ContentPageItem.Content" id="editor"></textarea>
+                                <span asp-validation-for="ContentPageItem.Content" class="text-danger small"></span>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="form-check form-switch pt-2 border-top mt-3">
-                            <input class="form-check-input" type="checkbox" asp-for="ContentPageItem.IsVisible">
-                            <label class="form-check-label small fw-bold" asp-for="ContentPageItem.IsVisible">Hiển thị công khai</label>
+                <div class="col-12 col-lg-3">
+                    <div class="sticky-top" style="top: 20px; z-index: 1000;">
+                        <button type="submit" class="btn btn-success w-100 py-3 mb-3 fw-bold shadow-sm rounded-3">
+                            <i class="bi bi-check-circle-fill me-2"></i> Cập nhật bài viết
+                        </button>
+
+                        @if (HttpContext.Request.Query["layout"] == "popup")
+                        {
+                            <button type="button" onclick="window.parent.reloadTrang()" class="btn btn-light w-100 mb-4 text-muted border-0 rounded-3">Hủy bỏ / Đóng</button>
+                        }
+                        else
+                        {
+                            <a href="/Trang/Index?category=@Model.ContentPageItem.Category" class="btn btn-light w-100 mb-4 text-muted border-0 rounded-3">Hủy bỏ</a>
+                        }
+
+                        <div class="bg-white p-4 shadow-sm rounded-4">
+                            <h6 class="fw-bold mb-3">Thông tin bài viết</h6>
+
+                            <div class="mb-4 pb-3 border-bottom">
+                                <label class="form-label small fw-bold">Ảnh đại diện (Thumbnail)</label>
+
+                                <div class="mb-2 text-center position-relative" style="background: #f8f9fa; border: 1px dashed #ced4da; border-radius: 8px; overflow: hidden; height: 160px; display: flex; align-items: center; justify-content: center;">
+                                    @if (!string.IsNullOrEmpty(Model.ContentPageItem.Thumbnail))
+                                    {
+                                        <img id="imgPreview" src="@Model.ContentPageItem.Thumbnail" alt="Xem trước ảnh" style="max-width: 100%; max-height: 100%; display: block;" />
+                                        <span id="txtNoImage" class="text-muted small" style="display: none;">
+                                            <i class="bi bi-image fs-1 d-block mb-1 text-secondary opacity-50"></i> Cập nhật ảnh khác
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <img id="imgPreview" src="" alt="Xem trước ảnh" style="max-width: 100%; max-height: 100%; display: none;" />
+                                        <span id="txtNoImage" class="text-muted small">
+                                            <i class="bi bi-image fs-1 d-block mb-1 text-secondary opacity-50"></i> Bấm để tải ảnh lên
+                                        </span>
+                                    }
+                                </div>
+                                <input type="file" asp-for="ContentPageItem.ThumbnailFile" id="fileUpload" class="form-control form-control-sm" accept="image/*" onchange="previewImage(event)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Tiêu đề</label>
+                                <textarea asp-for="ContentPageItem.Title" id="txtTitle" class="form-control bg-light border-0 p-3" rows="3"></textarea>
+                                <span asp-validation-for="ContentPageItem.Title" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Slug (URL)</label>
+                                <div class="input-group">
+                                    <input asp-for="ContentPageItem.Slug" id="txtSlug" class="form-control bg-light border-0 text-muted" readonly />
+                                    <button class="btn btn-outline-secondary border-0" type="button" id="btnRegenSlug" title="Tạo lại Slug">
+                                        <i class="bi bi-arrow-clockwise"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch pt-2 border-top mt-3">
+                                <input class="form-check-input" type="checkbox" asp-for="ContentPageItem.IsVisible">
+                                <label class="form-check-label small fw-bold" asp-for="ContentPageItem.IsVisible">Hiển thị công khai</label>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </form>
-</div>
+        </form>
+    </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
 
     <script>
+        // HÀM XEM TRƯỚC ẢNH
+        function previewImage(event) {
+            var reader = new FileReader();
+            reader.onload = function(){
+                var output = document.getElementById('imgPreview');
+                var txt = document.getElementById('txtNoImage');
+                output.src = reader.result;
+                output.style.display = 'block';
+                txt.style.display = 'none';
+            };
+            if(event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // --- HÀM NÉN ẢNH ---
             function compressImage(file, quality = 0.7, maxWidth = 1920) {
@@ -113,8 +208,9 @@
                 plugins: 'lists link image table autoresize wordcount code',
                 toolbar: 'undo redo | blocks fontsize | bold italic underline forecolor | alignleft aligncenter alignright | bullist numlist | link image table quotebox | removeformat code',
                 menubar: false, statusbar: false, min_height: 800, autoresize_bottom_margin: 50,
+                content_style: `body { font-family: 'Times New Roman', serif; font-size: 19px; line-height: 1.6; padding: 10px; } img { max-width: 100%; height: auto; } .quote-classic { background: #f8f9fa; border-left: 4px solid #007bff; padding: 20px; font-style: italic; }`,
 
-                // Cấu hình upload ảnh (Đã sửa lỗi cú pháp)
+                // Cấu hình upload ảnh
                 images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
                     const file = blobInfo.blob();
                     if (file.size < 1024 * 1024) { // < 1MB
@@ -158,4 +254,5 @@
             });
         });
     </script>
-}
+</body>
+</html>

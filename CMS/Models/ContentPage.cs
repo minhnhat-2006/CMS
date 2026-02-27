@@ -35,6 +35,10 @@ namespace CMS.Models
         [Display(Name = "Ngày tạo")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // Thêm property này để EF Core tự xử lý
+        [NotMapped]
+        public DateTime CreatedAtUtc => DateTime.SpecifyKind(CreatedAt, DateTimeKind.Utc);
+
         // ← THÊM DÒNG NÀY (Optional nhưng nên có)
 
 

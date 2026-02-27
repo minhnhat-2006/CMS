@@ -37,9 +37,13 @@ namespace CMS.Pages.Trang
             if (id == null) return NotFound();
 
             var pageItem = await _context.ContentPages.FindAsync(id);
+            string categoryName = ""; // Lưu tạm tên chuyên mục
+
             if (pageItem != null)
             {
-                // ✅ Xóa file thumbnail nếu có
+                categoryName = pageItem.Category; // Giữ lại thông tin trước khi bản ghi bị xóa
+
+                // Xóa file thumbnail nếu có
                 if (!string.IsNullOrEmpty(pageItem.Thumbnail))
                 {
                     var filePath = Path.Combine(_env.WebRootPath, pageItem.Thumbnail.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
@@ -49,12 +53,12 @@ namespace CMS.Pages.Trang
                     }
                 }
 
-                ContentPageItem = pageItem;
-                _context.ContentPages.Remove(ContentPageItem);
+                _context.ContentPages.Remove(pageItem);
                 await _context.SaveChangesAsync();
             }
 
-            return RedirectToPage("./Index");
+            // Điều hướng trả về đúng chuyên mục cũ và giữ nguyên trạng thái Popup
+            return RedirectToPage("./Index", new { category = categoryName, layout = "popup" });
         }
     }
 }

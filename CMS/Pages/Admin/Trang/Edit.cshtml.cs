@@ -2,8 +2,11 @@
 using CMS.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CMS.Pages.Trang
 {
@@ -23,51 +26,60 @@ namespace CMS.Pages.Trang
         {
             if (id == null) return NotFound();
 
-            // 1. Lấy bài viết cần sửa
             var contentPage = await _context.ContentPages.FirstOrDefaultAsync(m => m.Id == id);
             if (contentPage == null) return NotFound();
 
             ContentPageItem = contentPage;
 
-            // 2. [QUAN TRỌNG] Nạp dữ liệu cho Dropdown Chuyên mục
-            // Logic này phải giống hệt lúc Tạo mới (Create)
-
-            var menus = await _context.NavigationMenus
-                .Where(x => x.ParentId == null && x.IsVisible) // Lấy Menu cha
-                .OrderBy(x => x.DisplayOrder)
-                .ToListAsync();
-
-            var categoryList = menus.Select(x => new
-            {
-                Name = x.Name,
-                // Value phải là cái chuỗi bạn muốn lưu vào DB (ví dụ: "tin-tuc")
-                // Nếu dùng Link động, có thể bạn muốn lưu Slug hoặc Tên không dấu
-                Value = !string.IsNullOrEmpty(x.Url)
-                        ? x.Url.Replace("/", "").ToLower().Trim()
-                        : x.Name.ToLower().Trim() // Fallback nếu không có Url
-            }).ToList();
-
-            // Chọn sẵn giá trị hiện tại của bài viết
-            ViewData["CategoryList"] = new SelectList(categoryList, "Value", "Name", ContentPageItem.Category);
+            // Đã dọn dẹp phần load Dropdown Menu vì ta dùng thẻ hidden để giữ nguyên Category
 
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
+            // Bỏ qua validate một số trường không thay đổi trên form
+            ModelState.Remove("ContentPageItem.SidebarItems");
+            ModelState.Remove("ContentPageItem.Category");
+
             if (!ModelState.IsValid)
             {
-                // Nếu lỗi, phải nạp lại Dropdown y hệt như OnGet
-                // (Copy đoạn logic lấy Menu xuống đây)
-                var menus = await _context.NavigationMenus.Where(x => x.ParentId == null && x.IsVisible).ToListAsync();
-                var categoryList = menus.Select(x => new {
-                    Name = x.Name,
-                    Value = !string.IsNullOrEmpty(x.Url) ? x.Url.Replace("/", "").ToLower().Trim() : x.Name.ToLower().Trim()
-                }).ToList();
-                ViewData["CategoryList"] = new SelectList(categoryList, "Value", "Name", ContentPageItem.Category);
-
-                return Page();
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                string errorString = string.Join("\\n- ", errors);
+                string scriptError = $@"<script>alert('CẬP NHẬT THẤT BẠI!\n- {errorString}'); history.back();</script>";
+                return Content(scriptError, "text/html");
             }
+
+            // ✅ Xử lý upload Thumbnail nếu người dùng chọn ảnh mới
+            if (ContentPageItem.ThumbnailFile != null && ContentPageItem.ThumbnailFile.Length > 0)
+            {
+                var file = ContentPageItem.ThumbnailFile;
+                var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+
+                if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                {
+                    return Content("<script>alert('Ảnh không hợp lệ!'); history.back();</script>", "text/html");
+                }
+
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "thumbnails");
+                Directory.CreateDirectory(uploadsFolder);
+
+                var ext = Path.GetExtension(file.FileName).ToLower();
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Gán link ảnh mới (nếu không up ảnh mới, entity tự giữ đường link cũ từ hidden input)
+                ContentPageItem.Thumbnail = $"/uploads/thumbnails/{fileName}";
+            }
+            ContentPageItem.CreatedAt = DateTime.SpecifyKind(ContentPageItem.CreatedAt, DateTimeKind.Utc);
 
             // Đánh dấu bản ghi đã bị thay đổi
             _context.Attach(ContentPageItem).State = EntityState.Modified;
@@ -82,7 +94,8 @@ namespace CMS.Pages.Trang
                 else throw;
             }
 
-            return RedirectToPage("./Index");
+            // Điều hướng trả về đúng danh sách bài của chuyên mục cũ trong Popup
+            return RedirectToPage("./Index", new { category = ContentPageItem.Category, layout = "popup" });
         }
     }
 }

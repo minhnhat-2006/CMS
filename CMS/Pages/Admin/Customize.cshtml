@@ -168,7 +168,7 @@
                                                 <i class="fas fa-layer-group text-primary fs-5 align-middle me-2"></i>
                                                 <strong>Kho bài viết:</strong> Quản lý danh sách bài đăng của chuyên mục này
 
-                                                <a href="/Admin/ContentPages/Index?chuyenMucId=@folder.ParentMenu.ChuyenMucId" class="btn btn-xs btn-outline-primary float-end ms-2">
+                                                <a href="/Admin/Trang/Index?category=@folder.ParentMenu.Name" class="btn btn-xs btn-outline-primary float-end ms-2 btn-open-modal">
                                                     <i class="fas fa-list"></i> Danh sách bài
                                                 </a>
                                                 <button type="button" data-url="/Admin/Trang/Create?menuId=@folder.ParentMenu.Id" class="btn btn-xs btn-primary float-end btn-open-modal">
@@ -203,7 +203,10 @@
                                                     <div class="content-box border-0" style="border-left: 4px solid #0d6efd; background-color: #f8fbff;">
                                                         <i class="fas fa-layer-group text-primary me-2"></i>
                                                         <strong>Kho bài viết con</strong>
-                                                        <a href="/Admin/ContentPages/Index?chuyenMucId=@child.ChildMenu.ChuyenMucId" class="btn btn-xs btn-outline-primary float-end ms-2"><i class="fas fa-list"></i> DS Bài</a>
+
+                                                        <a href="/Admin/Trang/Index?category=@child.ChildMenu.Name" class="btn btn-xs btn-outline-primary float-end ms-2 btn-open-modal">
+                                                            <i class="fas fa-list"></i> DS Bài
+                                                        </a>
                                                         <button type="button" data-url="/Admin/Trang/Create?menuId=@child.ChildMenu.Id" class="btn btn-xs btn-primary float-end btn-open-modal">
                                                             <i class="fas fa-plus"></i> Thêm mới
                                                         </button>
@@ -322,7 +325,7 @@
         <div class="modal-content overflow-hidden border-0 shadow-lg" style="height: 90vh;">
 
             <div class="modal-header bg-dark text-white py-2">
-                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-edit me-2"></i> Không gian Soạn thảo</h6>
+                <h6 class="modal-title fw-bold mb-0"><i class="fas fa-edit me-2"></i> Quản lý nội dung</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="reloadTrang()"></button>
             </div>
 
@@ -337,7 +340,6 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Giữ nguyên hiệu ứng đổi màu Tab của bác
             $('button[data-bs-toggle="pill"]').on('shown.bs.tab', function (e) {
                 $('.nav-pills .nav-link').removeClass('bg-primary bg-success text-white').addClass('bg-white');
                 $('#pills-hub-tab').not('.active').addClass('text-primary');
@@ -353,38 +355,40 @@
             $('#pills-hub-tab').trigger('shown.bs.tab');
 
             // -----------------------------------------------------
-            // 🌟 SỨC MẠNH IFRAME: MỞ MODAL ĐĂNG BÀI
+            // 🌟 SỨC MẠNH IFRAME: MỞ MODAL
             // -----------------------------------------------------
             $(document).on('click', '.btn-open-modal', function (e) {
                 e.preventDefault();
 
-                // Lấy đường dẫn url đang giấu trong nút bấm
-                var url = $(this).data('url');
+                // Đọc url từ thuộc tính href (thẻ a) hoặc data-url (button)
+                var url = $(this).attr('href') || $(this).data('url');
 
-                // Bơm URL vào Iframe (nó sẽ tải form Create.cshtml một cách độc lập)
+                // Thêm layout=popup vào URL để trang bên trong biết cần ẩn Layout
+                if(url.indexOf('?') > -1) {
+                    url += '&layout=popup';
+                } else {
+                    url += '?layout=popup';
+                }
+
                 $('#modalIframe').attr('src', url);
 
-                // Mở màn Modal lên
                 var myModal = new bootstrap.Modal(document.getElementById('dynamicModal'));
                 myModal.show();
             });
         });
 
-        // -----------------------------------------------------
-        // 🌟 BÍ THUẬT LẮNG NGHE LỆNH TỪ BÊN TRONG IFRAME
-        // (Được gọi bởi window.parent.reloadTrang() trong C#)
-        // -----------------------------------------------------
-        function reloadTrang() {
-            // Dọn dẹp Iframe
+                function reloadTrang() {
+            // 1. Dọn dẹp Iframe
             $('#modalIframe').attr('src', '');
 
-            // F5 tải lại trang Customize để hiển thị bài viết vừa thêm
-            location.reload();
+            // 2. Tìm và đóng Modal một cách êm ái bằng lệnh của Bootstrap
+            var modalElement = document.getElementById('dynamicModal');
+            var modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
         }
 
-        // -----------------------------------------------------
-        // XỬ LÝ ĐÓNG/MỞ CÂY THƯ MỤC (Giữ nguyên của bác)
-        // -----------------------------------------------------
         function toggleFolder(element) {
             var $childList = $(element).next('.child-list');
             var $icon = $(element).find('.folder-icon');
